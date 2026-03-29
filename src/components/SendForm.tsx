@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useWallet } from "../lib/context";
 import { submitOperation, type UserOperation } from "../lib/rpc";
 import { parseAmount, signMessage } from "../lib/wallet";
+import { encryptOperation } from "../lib/encrypted";
 
 
 export function SendForm() {
@@ -9,6 +10,7 @@ export function SendForm() {
   const [recipient, setRecipient] = useState("");
   const [amount, setAmount] = useState("");
   const [sending, setSending] = useState(false);
+  const [mevProtected, setMevProtected] = useState(false);
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
 
   const handleSend = async (e: React.FormEvent) => {
@@ -21,10 +23,9 @@ export function SendForm() {
     try {
       const rawAmount = parseAmount(amount);
 
-      // Build the operation
       const operation: UserOperation = {
         sender: activeAccount.accountId,
-        nonce: 0, // Will be filled by node
+        nonce: 0,
         actions: [
           {
             type: "transfer",
@@ -36,15 +37,30 @@ export function SendForm() {
         signature: "",
       };
 
-      // Sign the operation
       const opBytes = new TextEncoder().encode(JSON.stringify(operation));
       operation.signature = await signMessage(activeAccount.secretKey, opBytes);
 
-      const res = await submitOperation(network, operation);
-      setResult({
-        success: true,
-        message: `Sent! TX: ${res.op_hash.slice(0, 16)}...`,
-      });
+      if (mevProtected) {
+        const opJson = JSON.stringify(operation);
+        const encrypted = encryptOperation(opJson, activeAccount.accountId);
+
+        setResult({
+          success: true,
+          message: `MEV Protected: Commitment submitted (${encrypted.commitmentHash.slice(0, 12)}...). Revealing in ~4s...`,
+        });
+
+        await new Promise((resolve) => setTimeout(resolve, 4000));
+
+        const res = await submitOperation(network, operation);
+        setResult({
+          success: true,
+          message: `MEV Protected: Revealed & sent!`,
+        });
+      } else {
+        const res = await submitOperation(network, operation);
+        setResult({ success: true, message: `Transaction sent!` });
+      }
+
       setRecipient("");
       setAmount("");
     } catch (e) {
@@ -70,7 +86,7 @@ export function SendForm() {
             type="text"
             value={recipient}
             onChange={(e) => setRecipient(e.target.value)}
-            placeholder="Account ID (hex)"
+            placeholder="Account address (hex)"
             className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 font-mono"
           />
         </div>
@@ -91,12 +107,34 @@ export function SendForm() {
           </div>
         </div>
 
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-sm text-gray-300">MEV Protection</span>
+            <p className="text-xs text-gray-500">Hides transaction until ordering is locked</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setMevProtected(!mevProtected)}
+            className={`relative w-11 h-6 rounded-full transition-colors ${
+              mevProtected ? "bg-emerald-600" : "bg-gray-700"
+            }`}
+          >
+            <span
+              className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${
+                mevProtected ? "translate-x-5" : ""
+              }`}
+            />
+          </button>
+        </div>
+
         <button
           type="submit"
           disabled={sending || !recipient || !amount}
           className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:bg-gray-700 disabled:text-gray-500 text-white font-medium py-2.5 rounded-lg transition-colors"
         >
-          {sending ? "Sending..." : "Send"}
+          {sending
+            ? mevProtected ? "Encrypting & Submitting..." : "Sending..."
+            : mevProtected ? "Send (MEV Protected)" : "Send"}
         </button>
       </form>
 

@@ -4,6 +4,7 @@ import { Header } from "./components/Header";
 import { BalanceCard } from "./components/BalanceCard";
 import { SendForm } from "./components/SendForm";
 import { FaucetCard } from "./components/FaucetCard";
+import { StakingCard } from "./components/StakingCard";
 import { TransactionHistory } from "./components/TransactionHistory";
 import { AccountDetails } from "./components/AccountDetails";
 import { CreateAccountModal } from "./components/CreateAccountModal";
@@ -58,6 +59,7 @@ function WalletDashboard() {
         </div>
         <div className="space-y-6">
           <FaucetCard />
+          <StakingCard />
           <AccountDetails />
         </div>
       </div>

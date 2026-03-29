@@ -100,3 +100,28 @@ export function simulateOperation(network: NetworkId, operation: UserOperation) 
     { operation },
   );
 }
+
+// Staking
+
+export interface ValidatorInfo {
+  address: string;
+  self_stake: string;
+  total_delegated: string;
+  total_stake: string;
+  is_active: boolean;
+  is_genesis: boolean;
+}
+
+export interface StakingInfo {
+  total_delegated: string;
+  delegations: { validator: string; amount: string }[];
+  pending_undelegations: number;
+}
+
+export function getValidators(network: NetworkId) {
+  return rpcCall<ValidatorInfo[]>(network, "solen_getValidators");
+}
+
+export function getStakingInfo(network: NetworkId, accountId: string) {
+  return rpcCall<StakingInfo>(network, "solen_getStakingInfo", { account_id: accountId });
+}
