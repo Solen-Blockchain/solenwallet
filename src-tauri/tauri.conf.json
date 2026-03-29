@@ -24,16 +24,6 @@
       "csp": null
     }
   },
-  "plugins": {
-    "http": {
-      "scope": {
-        "allow": [
-          { "url": "https://*.solenchain.com/**" },
-          { "url": "http://127.0.0.1:*/**" }
-        ]
-      }
-    }
-  },
   "bundle": {
     "active": true,
     "targets": "all",
