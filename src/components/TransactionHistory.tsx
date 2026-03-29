@@ -2,6 +2,25 @@ import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "../lib/context";
 import { networks } from "../lib/networks";
 import { httpFetch } from "../lib/http";
+import { formatBalance } from "../lib/wallet";
+
+// Parse a little-endian u128 hex string to a BigInt
+function leHexToAmount(hex: string): string {
+  // Reverse byte pairs for LE → BE conversion
+  let be = "";
+  for (let i = hex.length - 2; i >= 0; i -= 2) {
+    be += hex.slice(i, i + 2);
+  }
+  return BigInt("0x" + be).toString();
+}
+
+// Transfer event data: 64 hex chars (recipient) + 32 hex chars (LE u128 amount)
+function parseTransferEvent(data: string): { recipient: string; amount: string } | null {
+  if (data.length < 96) return null;
+  const recipient = data.slice(0, 64);
+  const amountHex = data.slice(64, 96);
+  return { recipient, amount: leHexToAmount(amountHex) };
+}
 
 interface TxEvent {
   block_height: number;
@@ -56,12 +75,16 @@ export function TransactionHistory() {
 
   const truncate = (s: string) => `${s.slice(0, 10)}...${s.slice(-6)}`;
 
-  const getTxType = (tx: Transaction): string => {
+  const getTransferInfo = (tx: Transaction) => {
     const transferEvent = tx.events.find((e) => e.topic === "transfer");
-    if (transferEvent) return "Transfer";
-    const topics = tx.events.map((e) => e.topic);
-    if (topics.includes("deploy")) return "Deploy";
-    if (topics.includes("call")) return "Call";
+    if (transferEvent) return parseTransferEvent(transferEvent.data);
+    return null;
+  };
+
+  const getTxType = (tx: Transaction): string => {
+    if (tx.events.some((e) => e.topic === "transfer")) return "Transfer";
+    if (tx.events.some((e) => e.topic === "deploy")) return "Deploy";
+    if (tx.events.some((e) => e.topic === "call")) return "Call";
     return "Transaction";
   };
 
@@ -119,11 +142,20 @@ export function TransactionHistory() {
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-sm text-gray-300">
-                  Block #{tx.block_height}
-                </div>
+                {(() => {
+                  const transfer = getTransferInfo(tx);
+                  if (transfer) {
+                    const sent = isSent(tx);
+                    return (
+                      <div className={`text-sm font-medium ${sent ? "text-red-400" : "text-emerald-400"}`}>
+                        {sent ? "-" : "+"}{formatBalance(transfer.amount)} SOLEN
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
                 <div className="text-xs text-gray-500">
-                  Nonce {tx.nonce}
+                  Block #{tx.block_height}
                 </div>
               </div>
             </div>
