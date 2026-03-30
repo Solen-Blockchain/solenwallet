@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useWallet } from "../lib/context";
 import { getAccount, submitOperation, type UserOperation } from "../lib/rpc";
 import { parseAmount, signMessage, buildSigningMessage } from "../lib/wallet";
+import { networks } from "../lib/networks";
 import { encryptOperation } from "../lib/encrypted";
 import { hexToBytes } from "@noble/hashes/utils";
 
@@ -46,7 +47,7 @@ export function SendForm() {
       const senderBytes = Array.from(hexToBytes(activeAccount.accountId));
       const toBytes = Array.from(hexToBytes(recipient));
       const rustActions = [{ Transfer: { to: toBytes, amount: parseInt(rawAmount) } }];
-      const sigMsg = buildSigningMessage(senderBytes, currentNonce, 10000, rustActions);
+      const sigMsg = buildSigningMessage(senderBytes, currentNonce, 10000, rustActions, networks[network].chainId);
       operation.signature = await signMessage(activeAccount.secretKey, sigMsg);
 
       if (mevProtected) {

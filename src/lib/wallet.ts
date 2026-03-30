@@ -86,7 +86,7 @@ export async function importAccount(name: string, secretKey: string): Promise<Wa
 
 /**
  * Build the signing message for a UserOperation, matching the Rust node's format:
- * sender[32] + nonce[8 LE] + max_fee[16 LE] + blake3(json(actions))[32]
+ * chain_id[8 LE] + sender[32] + nonce[8 LE] + max_fee[16 LE] + blake3(json(actions))[32]
  *
  * The `rustActions` parameter should be the actions in Rust serde format
  * (e.g., [{ "Transfer": { "to": [...], "amount": 100 } }]).
@@ -96,26 +96,32 @@ export function buildSigningMessage(
   nonce: number,
   maxFee: number,
   rustActions: unknown[],
+  chainId: number = 0,
 ): Uint8Array {
-  const msg = new Uint8Array(32 + 8 + 16 + 32); // 88 bytes total
+  const msg = new Uint8Array(8 + 32 + 8 + 16 + 32); // 96 bytes total
+
+  // chain_id[8 LE]
+  const chainView = new DataView(new ArrayBuffer(8));
+  chainView.setBigUint64(0, BigInt(chainId), true);
+  msg.set(new Uint8Array(chainView.buffer), 0);
 
   // sender[32]
-  msg.set(senderBytes, 0);
+  msg.set(senderBytes, 8);
 
   // nonce[8 LE]
   const nonceView = new DataView(new ArrayBuffer(8));
   nonceView.setBigUint64(0, BigInt(nonce), true);
-  msg.set(new Uint8Array(nonceView.buffer), 32);
+  msg.set(new Uint8Array(nonceView.buffer), 40);
 
   // max_fee[16 LE] (u128 — just use first 8 bytes, rest zero)
   const feeView = new DataView(new ArrayBuffer(16));
   feeView.setBigUint64(0, BigInt(maxFee), true);
-  msg.set(new Uint8Array(feeView.buffer), 40);
+  msg.set(new Uint8Array(feeView.buffer), 48);
 
   // blake3(json(actions))[32]
   const actionsJson = JSON.stringify(rustActions);
   const actionsHash = blake3(new TextEncoder().encode(actionsJson));
-  msg.set(actionsHash.slice(0, 32), 56);
+  msg.set(actionsHash.slice(0, 32), 64);
 
   return msg;
 }

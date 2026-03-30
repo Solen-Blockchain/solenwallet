@@ -10,6 +10,7 @@ import {
   type UserOperation,
 } from "../lib/rpc";
 import { formatBalance, parseAmount, signMessage, buildSigningMessage } from "../lib/wallet";
+import { networks } from "../lib/networks";
 import { hexToBytes } from "@noble/hashes/utils";
 
 const STAKING_ADDRESS = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff01";
@@ -96,7 +97,7 @@ export function StakingCard() {
       const targetBytes = Array.from(hexToBytes(STAKING_ADDRESS));
       const argsBytes = Array.from(hexToBytes(args));
       const rustActions = [{ Call: { target: targetBytes, method, args: argsBytes } }];
-      const sigMsg = buildSigningMessage(senderBytes, currentNonce, 100000, rustActions);
+      const sigMsg = buildSigningMessage(senderBytes, currentNonce, 100000, rustActions, networks[network].chainId);
       operation.signature = await signMessage(activeAccount.secretKey, sigMsg);
 
       await submitOperation(network, operation);
