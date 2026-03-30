@@ -20,7 +20,7 @@ interface TokenInfo {
 // Hardcoded known token contracts per network (discovered tokens added dynamically).
 const KNOWN_TOKENS: Record<string, string[]> = {
   testnet: [
-    "e02e29a44d3a8df628d1ddc9c45e2e8800a06c8ed75456abfd01465f1bf606db",
+    "999019653eac5156c6098d111ec47652136faba73178a2cd32006e5ed2796516",
   ],
   devnet: [],
   mainnet: [],
@@ -150,75 +150,71 @@ export function TokenCard() {
 
   if (!activeAccount || tokens.length === 0) return null;
 
+  const tokensWithBalance = tokens.filter((t) => t.balance > BigInt(0));
+  const selected = tokensWithBalance.find((t) => t.contract === selectedToken);
+
   return (
     <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700/50">
       <h3 className="text-lg font-semibold text-gray-200 mb-4">Token Balances</h3>
 
-      <div className="space-y-2 mb-4">
-        {tokens.map((token) => (
-          <div
-            key={token.contract}
-            className="flex items-center justify-between bg-gray-900/50 rounded-lg px-3 py-2"
-          >
-            <div className="flex items-center gap-2">
-              <span className="text-xs bg-purple-500/20 text-purple-300 rounded-full px-2 py-0.5 font-medium">
-                {token.symbol}
-              </span>
-              <span className="text-sm text-gray-400">{token.name}</span>
-            </div>
-            <span className="font-mono text-sm text-gray-200">
-              {token.balance.toLocaleString()}
+      {/* Token selector + balance display */}
+      <div className="bg-gray-900/50 rounded-lg p-4 mb-4">
+        <select
+          value={selectedToken}
+          onChange={(e) => setSelectedToken(e.target.value)}
+          className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-purple-500/50 mb-2"
+        >
+          {tokensWithBalance.map((t) => (
+            <option key={t.contract} value={t.contract}>
+              {t.symbol} — {t.name}
+            </option>
+          ))}
+        </select>
+        {selected && (
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-400">Balance</span>
+            <span className="text-xl font-bold text-purple-400">
+              {selected.balance.toLocaleString()} <span className="text-sm font-normal text-gray-500">{selected.symbol}</span>
             </span>
           </div>
-        ))}
+        )}
       </div>
 
-      <form onSubmit={handleTransfer} className="space-y-3">
-        <div className="text-sm text-gray-400 font-medium">Send Tokens</div>
+      {/* Send form — only show if user has tokens */}
+      {selected && selected.balance > BigInt(0) && (
+        <form onSubmit={handleTransfer} className="space-y-3">
+          <div className="text-sm text-gray-400 font-medium">Send {selected.symbol}</div>
 
-        {tokens.length > 1 && (
-          <select
-            value={selectedToken}
-            onChange={(e) => setSelectedToken(e.target.value)}
-            className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-emerald-500/50"
-          >
-            {tokens.map((t) => (
-              <option key={t.contract} value={t.contract}>
-                {t.symbol} — {t.name}
-              </option>
-            ))}
-          </select>
-        )}
-
-        <input
-          type="text"
-          value={recipient}
-          onChange={(e) => setRecipient(e.target.value)}
-          placeholder="Recipient account ID (hex)"
-          className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 font-mono"
-        />
-
-        <div className="relative">
           <input
             type="text"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="0"
-            className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2.5 pr-16 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-emerald-500/50"
+            value={recipient}
+            onChange={(e) => setRecipient(e.target.value)}
+            placeholder="Recipient account ID (hex)"
+            className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-purple-500/50 font-mono"
           />
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">
-            {tokens.find((t) => t.contract === selectedToken)?.symbol || ""}
-          </span>
-        </div>
 
-        <button
-          type="submit"
-          disabled={submitting || !recipient || !amount}
-          className="w-full bg-purple-600 hover:bg-purple-500 disabled:bg-gray-700 disabled:text-gray-500 text-white font-medium py-2.5 rounded-lg transition-colors"
-        >
-          {submitting ? "Sending..." : "Send Tokens"}
-        </button>
-      </form>
+          <div className="relative">
+            <input
+              type="text"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="0"
+              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2.5 pr-16 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-purple-500/50"
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">
+              {selected.symbol}
+            </span>
+          </div>
+
+          <button
+            type="submit"
+            disabled={submitting || !recipient || !amount}
+            className="w-full bg-purple-600 hover:bg-purple-500 disabled:bg-gray-700 disabled:text-gray-500 text-white font-medium py-2.5 rounded-lg transition-colors"
+          >
+            {submitting ? "Sending..." : `Send ${selected.symbol}`}
+          </button>
+        </form>
+      )}
 
       {result && (
         <div

@@ -217,9 +217,9 @@ export function callView(
   method: string,
   args?: string,
 ) {
-  return rpcCall<CallViewResult>(network, "solen_callView", {
-    contract_id: contractId,
+  return rpcCall<CallViewResult>(network, "solen_callView", [
+    contractId,
     method,
-    args: args || null,
-  });
+    args || null,
+  ]);
 }
