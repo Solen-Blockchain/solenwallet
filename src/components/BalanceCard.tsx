@@ -7,18 +7,15 @@ export function BalanceCard() {
   const { network, activeAccount } = useWallet();
   const [balance, setBalance] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const fetchBalance = useCallback(async () => {
     if (!activeAccount) return;
     setLoading(true);
-    setError(null);
     try {
       const raw = await getBalance(network, activeAccount.accountId);
       setBalance(raw);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to fetch balance");
-      setBalance(null);
+    } catch {
+      // Keep the last known balance on failure — just retry next interval.
     } finally {
       setLoading(false);
     }
@@ -58,16 +55,12 @@ export function BalanceCard() {
         </button>
       </div>
 
-      {error ? (
-        <div className="text-red-400 text-sm">{error}</div>
-      ) : (
-        <div className="flex items-baseline gap-2">
-          <span className="text-4xl font-bold text-white">
-            {balance !== null ? formatBalance(balance) : loading ? "..." : "0"}
-          </span>
-          <span className="text-lg text-gray-400">SOLEN</span>
-        </div>
-      )}
+      <div className="flex items-baseline gap-2">
+        <span className="text-4xl font-bold text-white">
+          {balance !== null ? formatBalance(balance) : loading ? "..." : "0"}
+        </span>
+        <span className="text-lg text-gray-400">SOLEN</span>
+      </div>
 
       <div className="mt-4 pt-4 border-t border-gray-700/50">
         <div className="text-xs text-gray-500 font-mono break-all">
