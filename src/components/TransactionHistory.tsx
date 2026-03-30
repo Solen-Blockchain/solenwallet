@@ -98,16 +98,28 @@ export function TransactionHistory() {
   };
 
   const getRewardInfo = (tx: Transaction) => {
-    const event = tx.events.find((e) => e.topic === "epoch_reward");
-    if (!event || event.data.length < 96) return null;
-    return { amount: leHexToAmount(event.data.slice(64, 96)) };
+    if (!activeAccount) return null;
+    // Find reward events for THIS account specifically.
+    const myRewardEvents = tx.events.filter((e) => {
+      if (e.topic !== "epoch_reward" && e.topic !== "delegator_reward") return false;
+      if (e.data.length < 96) return false;
+      const recipient = e.data.slice(0, 64);
+      return recipient === activeAccount.accountId;
+    });
+    if (myRewardEvents.length === 0) return null;
+    // Sum all matching reward events for this account.
+    let total = BigInt(0);
+    for (const event of myRewardEvents) {
+      total += BigInt(leHexToAmount(event.data.slice(64, 96)));
+    }
+    return { amount: total.toString() };
   };
 
   const getTxType = (tx: Transaction): string => {
     if (tx.events.some((e) => e.topic === "transfer")) return "Transfer";
     if (tx.events.some((e) => e.topic === "delegate")) return "Stake";
     if (tx.events.some((e) => e.topic === "undelegate")) return "Unstake";
-    if (tx.events.some((e) => e.topic === "epoch_reward")) return "Reward";
+    if (tx.events.some((e) => e.topic === "epoch_reward" || e.topic === "delegator_reward")) return "Reward";
     if (tx.events.some((e) => e.topic === "deploy")) return "Deploy";
     return "Transaction";
   };
