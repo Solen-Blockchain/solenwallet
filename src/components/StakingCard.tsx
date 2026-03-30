@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useWallet } from "../lib/context";
 import {
+  getAccount,
   getValidators,
   getStakingInfo,
   submitOperation,
@@ -71,9 +72,13 @@ export function StakingCard() {
 
       const method = action === "stake" ? "delegate" : "undelegate";
 
+      // Fetch current nonce.
+      const accountInfo = await getAccount(network, activeAccount.accountId);
+      const currentNonce = accountInfo.nonce;
+
       const operation: UserOperation = {
         sender: activeAccount.accountId,
-        nonce: 0,
+        nonce: currentNonce,
         actions: [
           {
             type: "call",
@@ -91,7 +96,7 @@ export function StakingCard() {
       const targetBytes = Array.from(hexToBytes(STAKING_ADDRESS));
       const argsBytes = Array.from(hexToBytes(args));
       const rustActions = [{ Call: { target: targetBytes, method, args: argsBytes } }];
-      const sigMsg = buildSigningMessage(senderBytes, 0, 100000, rustActions);
+      const sigMsg = buildSigningMessage(senderBytes, currentNonce, 100000, rustActions);
       operation.signature = await signMessage(activeAccount.secretKey, sigMsg);
 
       await submitOperation(network, operation);
