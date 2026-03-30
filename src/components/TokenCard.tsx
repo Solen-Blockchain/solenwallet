@@ -8,6 +8,7 @@ import {
 } from "../lib/rpc";
 import { signMessage, buildSigningMessage } from "../lib/wallet";
 import { networks } from "../lib/networks";
+import { httpFetch } from "../lib/http";
 import { hexToBytes } from "@noble/hashes/utils";
 
 interface TokenInfo {
@@ -16,15 +17,6 @@ interface TokenInfo {
   symbol: string;
   balance: bigint;
 }
-
-// Hardcoded known token contracts per network (discovered tokens added dynamically).
-const KNOWN_TOKENS: Record<string, string[]> = {
-  testnet: [
-    "7efd4515fcea2a83b0b0c12a154b82ca7fc432d1a125406f5973fa7a72a1ccdf",
-  ],
-  devnet: [],
-  mainnet: [],
-};
 
 function hexToU128(hex: string): bigint {
   const bytes = hexToBytes(hex.length > 32 ? hex.slice(0, 32) : hex);
@@ -48,7 +40,15 @@ export function TokenCard() {
     if (!activeAccount) return;
 
     const fetchTokens = async () => {
-      const contracts = KNOWN_TOKENS[network] || [];
+      // Discover token contracts from the explorer indexer API.
+      let contracts: string[] = [];
+      try {
+        const apiUrl = networks[network].explorerApiUrl;
+        const res = await httpFetch(`${apiUrl}/api/accounts/${activeAccount.accountId}/tokens`);
+        if (res.ok) {
+          contracts = await res.json();
+        }
+      } catch {}
       const found: TokenInfo[] = [];
 
       for (const contract of contracts) {

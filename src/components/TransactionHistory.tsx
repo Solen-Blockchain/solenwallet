@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "../lib/context";
 import { networks } from "../lib/networks";
 import { httpFetch } from "../lib/http";
+import { callView } from "../lib/rpc";
 import { formatBalance } from "../lib/wallet";
 
 // Parse a little-endian u128 hex string to a BigInt
@@ -78,8 +79,18 @@ export function TransactionHistory() {
   const truncate = (s: string) => `${s.slice(0, 10)}...${s.slice(-6)}`;
 
   const getTransferInfo = (tx: Transaction) => {
-    const transferEvent = tx.events.find((e) => e.topic === "transfer");
-    if (transferEvent) return parseTransferEvent(transferEvent.data);
+    // Prefer native transfer (emitter == sender).
+    const nativeTransfer = tx.events.find((e) => e.topic === "transfer" && e.emitter === tx.sender);
+    if (nativeTransfer) {
+      const info = parseTransferEvent(nativeTransfer.data);
+      return info ? { ...info, tokenContract: undefined as string | undefined } : null;
+    }
+    // Token transfer (emitter is a contract).
+    const tokenTransfer = tx.events.find((e) => e.topic === "transfer" && e.emitter !== tx.sender);
+    if (tokenTransfer) {
+      const info = parseTransferEvent(tokenTransfer.data);
+      return info ? { ...info, tokenContract: tokenTransfer.emitter } : null;
+    }
     return null;
   };
 
@@ -115,8 +126,41 @@ export function TransactionHistory() {
     return { amount: total.toString() };
   };
 
+  // Token symbol cache + lookup.
+  const [tokenSymbols, setTokenSymbols] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const contracts = new Set<string>();
+    for (const tx of txs) {
+      const info = getTransferInfo(tx);
+      if (info?.tokenContract && !tokenSymbols[info.tokenContract]) {
+        contracts.add(info.tokenContract);
+      }
+    }
+    if (contracts.size === 0) return;
+    const lookups = Array.from(contracts).map(async (id) => {
+      try {
+        const res = await callView(network, id, "symbol");
+        if (res.success) {
+          const sym = new TextDecoder().decode(
+            Uint8Array.from(res.return_data.match(/.{2}/g)!.map((b: string) => parseInt(b, 16)))
+          );
+          return [id, sym] as [string, string];
+        }
+      } catch {}
+      return [id, id.slice(0, 8) + "..."] as [string, string];
+    });
+    Promise.all(lookups).then((results) => {
+      const newSymbols = { ...tokenSymbols };
+      for (const [id, sym] of results) newSymbols[id] = sym;
+      setTokenSymbols(newSymbols);
+    });
+  }, [txs, network]);
+
   const getTxType = (tx: Transaction): string => {
-    if (tx.events.some((e) => e.topic === "transfer")) return "Transfer";
+    const transfer = getTransferInfo(tx);
+    if (transfer?.tokenContract) return "Token Transfer";
+    if (transfer) return "Transfer";
     if (tx.events.some((e) => e.topic === "delegate")) return "Stake";
     if (tx.events.some((e) => e.topic === "undelegate")) return "Unstake";
     if (tx.events.some((e) => e.topic === "epoch_reward" || e.topic === "delegator_reward")) return "Reward";
@@ -182,9 +226,14 @@ export function TransactionHistory() {
                   const transfer = getTransferInfo(tx);
                   if (transfer) {
                     const sent = isSent(tx);
+                    const isToken = !!transfer.tokenContract;
+                    const sym = transfer.tokenContract ? (tokenSymbols[transfer.tokenContract] || "tokens") : "SOLEN";
+                    const displayAmount = isToken
+                      ? Number(transfer.amount).toLocaleString()
+                      : formatBalance(transfer.amount);
                     return (
-                      <div className={`text-sm font-medium ${sent ? "text-red-400" : "text-emerald-400"}`}>
-                        {sent ? "-" : "+"}{formatBalance(transfer.amount)} SOLEN
+                      <div className={`text-sm font-medium ${isToken ? "text-purple-400" : sent ? "text-red-400" : "text-emerald-400"}`}>
+                        {sent ? "-" : "+"}{displayAmount} {sym}
                       </div>
                     );
                   }
