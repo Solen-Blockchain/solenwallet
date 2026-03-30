@@ -201,3 +201,25 @@ export interface VestingInfo {
 export function getVestingInfo(network: NetworkId, accountId: string) {
   return rpcCall<VestingInfo>(network, "solen_getVestingInfo", [accountId]);
 }
+
+// Contract view calls
+
+export interface CallViewResult {
+  success: boolean;
+  return_data: string;
+  gas_used: number;
+  error?: string;
+}
+
+export function callView(
+  network: NetworkId,
+  contractId: string,
+  method: string,
+  args?: string,
+) {
+  return rpcCall<CallViewResult>(network, "solen_callView", {
+    contract_id: contractId,
+    method,
+    args: args || null,
+  });
+}
