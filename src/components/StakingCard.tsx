@@ -128,21 +128,40 @@ export function StakingCard() {
 
       {/* Staking summary */}
       <div className="bg-gray-900/50 rounded-lg p-4 mb-4">
-        <div className="text-sm text-gray-400">Your Total Staked</div>
-        <div className="text-2xl font-bold text-emerald-400">{totalStaked} SOLEN</div>
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm text-gray-400">Your Total Staked</span>
+          <span className="text-xl font-bold text-emerald-400">{totalStaked} SOLEN</span>
+        </div>
         {stakingInfo && stakingInfo.delegations.length > 0 && (
-          <div className="mt-2 space-y-1">
-            {stakingInfo.delegations.map((d, i) => (
-              <div key={i} className="flex justify-between text-xs text-gray-500">
-                <span className="font-mono">{d.validator.slice(0, 12)}...</span>
-                <span>{formatBalance(d.amount)} SOLEN</span>
-              </div>
-            ))}
+          <div className="space-y-2 pt-2 border-t border-gray-700/50">
+            {stakingInfo.delegations.map((d, i) => {
+              const validator = validators.find((v) => v.address === d.validator);
+              return (
+                <div key={i} className="flex items-center justify-between bg-gray-800/50 rounded-lg px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <div>
+                      <span className="font-mono text-xs text-gray-300">{d.validator.slice(0, 12)}...{d.validator.slice(-6)}</span>
+                      {validator?.is_genesis && (
+                        <span className="ml-1 text-[10px] text-indigo-400">Genesis</span>
+                      )}
+                    </div>
+                  </div>
+                  <span className="text-sm font-medium text-emerald-400">{formatBalance(d.amount)} SOLEN</span>
+                </div>
+              );
+            })}
           </div>
         )}
         {stakingInfo && stakingInfo.pending_undelegations > 0 && (
-          <div className="text-xs text-yellow-500 mt-2">
+          <div className="flex items-center gap-1.5 text-xs text-yellow-500 mt-2 pt-2 border-t border-gray-700/50">
+            <span className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
             {stakingInfo.pending_undelegations} pending undelegation(s)
+          </div>
+        )}
+        {stakingInfo && stakingInfo.delegations.length === 0 && (
+          <div className="text-xs text-gray-500 text-center py-2">
+            No active delegations
           </div>
         )}
       </div>
