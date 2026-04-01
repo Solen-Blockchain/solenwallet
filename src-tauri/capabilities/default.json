@@ -7,7 +7,7 @@
     {
       "identifier": "http:default",
       "allow": [
-        { "url": "https://*.solenchain.com/**" },
+        { "url": "https://*.solenchain.io/**" },
         { "url": "http://127.0.0.1:*/**" }
       ]
     }
