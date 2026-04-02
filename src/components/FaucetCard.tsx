@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useWallet } from "../lib/context";
-import { networks } from "../lib/networks";
+import { networks, getNetworkConfig } from "../lib/networks";
 import { requestDrip, getFaucetStatus, type FaucetStatus } from "../lib/faucet";
 import { formatBalance } from "../lib/wallet";
 
@@ -10,7 +10,7 @@ export function FaucetCard() {
   const [status, setStatus] = useState<FaucetStatus | null>(null);
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
 
-  const faucetUrl = networks[network].faucetUrl;
+  const faucetUrl = getNetworkConfig(network).faucetUrl;
   if (!faucetUrl || !activeAccount) return null;
 
   const handleClaim = async () => {

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "../lib/context";
-import { networks } from "../lib/networks";
+import { getNetworkConfig } from "../lib/networks";
 import { httpFetch } from "../lib/http";
 import { callView } from "../lib/rpc";
 import { formatBalance } from "../lib/wallet";
@@ -54,7 +54,7 @@ export function TransactionHistory() {
     setError(null);
 
     try {
-      const apiUrl = networks[network].explorerApiUrl;
+      const apiUrl = getNetworkConfig(network).explorerApiUrl;
       const res = await httpFetch(
         `${apiUrl}/api/accounts/${activeAccount.accountId}/txs?limit=20`,
       );

@@ -1,4 +1,4 @@
-import { networks, type NetworkId } from "./networks";
+import { getNetworkConfig, type NetworkId } from "./networks";
 import { httpFetch } from "./http";
 
 let requestId = 0;
@@ -8,7 +8,7 @@ export async function rpcCall<T>(
   method: string,
   params: unknown[] | Record<string, unknown> = [],
 ): Promise<T> {
-  const url = networks[network].rpcUrl;
+  const url = getNetworkConfig(network).rpcUrl;
   const id = ++requestId;
 
   const body = JSON.stringify({ jsonrpc: "2.0", id, method, params });

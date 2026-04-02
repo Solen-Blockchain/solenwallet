@@ -49,3 +49,36 @@ export const networks: Record<NetworkId, NetworkConfig> = {
 };
 
 export const DEFAULT_NETWORK: NetworkId = "testnet";
+
+const OVERRIDES_KEY = "solen_network_overrides";
+
+export type NetworkOverrides = Partial<Pick<NetworkConfig, "rpcUrl" | "explorerApiUrl" | "explorerUrl" | "faucetUrl">>;
+
+/** Load user overrides from localStorage. */
+export function loadNetworkOverrides(): Partial<Record<NetworkId, NetworkOverrides>> {
+  try {
+    const raw = localStorage.getItem(OVERRIDES_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+/** Save user overrides to localStorage. */
+export function saveNetworkOverrides(overrides: Partial<Record<NetworkId, NetworkOverrides>>) {
+  localStorage.setItem(OVERRIDES_KEY, JSON.stringify(overrides));
+}
+
+/** Get effective config for a network (defaults + overrides). */
+export function getNetworkConfig(id: NetworkId): NetworkConfig {
+  const base = networks[id];
+  const overrides = loadNetworkOverrides()[id];
+  if (!overrides) return base;
+  return {
+    ...base,
+    rpcUrl: overrides.rpcUrl || base.rpcUrl,
+    explorerApiUrl: overrides.explorerApiUrl || base.explorerApiUrl,
+    explorerUrl: overrides.explorerUrl || base.explorerUrl,
+    faucetUrl: overrides.faucetUrl ?? base.faucetUrl,
+  };
+}

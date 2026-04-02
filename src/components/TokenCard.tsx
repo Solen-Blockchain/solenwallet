@@ -7,7 +7,7 @@ import {
   type UserOperation,
 } from "../lib/rpc";
 import { signMessage, buildSigningMessage } from "../lib/wallet";
-import { networks } from "../lib/networks";
+import { networks, getNetworkConfig } from "../lib/networks";
 import { httpFetch } from "../lib/http";
 import { hexToBytes } from "@noble/hashes/utils";
 import { openUrl } from "../lib/open";
@@ -66,7 +66,7 @@ export function TokenCard() {
       // Discover token contracts from the explorer indexer API.
       let contracts: string[] = [];
       try {
-        const apiUrl = networks[network].explorerApiUrl;
+        const apiUrl = getNetworkConfig(network).explorerApiUrl;
         const res = await httpFetch(`${apiUrl}/api/accounts/${activeAccount.accountId}/tokens`);
         if (res.ok) {
           contracts = await res.json();
@@ -208,7 +208,7 @@ export function TokenCard() {
             <div className="flex items-center justify-between pt-2 border-t border-gray-700/50">
               <span className="text-xs text-gray-500">Contract ID</span>
               <button
-                onClick={() => openUrl(`${networks[network].explorerUrl}/account/${selected.contract}`)}
+                onClick={() => openUrl(`${getNetworkConfig(network).explorerUrl}/account/${selected.contract}`)}
                 className="text-xs font-mono text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1"
                 title={selected.contract}
               >

@@ -1,6 +1,14 @@
 import { useState } from "react";
 import { useWallet } from "../lib/context";
 import { LOCK_TIMEOUT_OPTIONS } from "../lib/context";
+import {
+  networks,
+  getNetworkConfig,
+  loadNetworkOverrides,
+  saveNetworkOverrides,
+  type NetworkId,
+  type NetworkOverrides,
+} from "../lib/networks";
 
 export function SettingsCard() {
   const {
@@ -222,18 +230,9 @@ export function SettingsCard() {
       </div>
 
       {/* Network */}
-      <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700/50">
-        <h3 className="text-lg font-semibold text-gray-200 mb-4">Network</h3>
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-sm text-gray-300">Current Network</div>
-            <div className="text-xs text-gray-500">Switch using the selector in the header</div>
-          </div>
-          <div className="text-sm text-gray-300 capitalize">{network}</div>
-        </div>
-      </div>
+      <NetworkSettings currentNetwork={network} />
 
-      {/* About */}
+      {/* About — moved below NetworkSettings */}
       <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700/50">
         <h3 className="text-lg font-semibold text-gray-200 mb-4">About</h3>
         <div className="space-y-2 text-sm text-gray-400">
@@ -250,6 +249,148 @@ export function SettingsCard() {
             <span className="text-gray-300">{hasPassword ? "AES-256-GCM + PBKDF2" : "None"}</span>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+const URL_FIELDS: { key: keyof NetworkOverrides; label: string }[] = [
+  { key: "rpcUrl", label: "RPC URL" },
+  { key: "explorerApiUrl", label: "Explorer API URL" },
+  { key: "explorerUrl", label: "Explorer URL" },
+  { key: "faucetUrl", label: "Faucet URL" },
+];
+
+function NetworkSettings({ currentNetwork }: { currentNetwork: NetworkId }) {
+  const [editingNetwork, setEditingNetwork] = useState<NetworkId | null>(null);
+  const [draft, setDraft] = useState<NetworkOverrides>({});
+  const [saved, setSaved] = useState("");
+
+  const startEditing = (id: NetworkId) => {
+    const overrides = loadNetworkOverrides()[id] || {};
+    setDraft(overrides);
+    setEditingNetwork(id);
+    setSaved("");
+  };
+
+  const handleSave = () => {
+    if (!editingNetwork) return;
+    const all = loadNetworkOverrides();
+    // Remove empty strings so defaults are used
+    const clean: NetworkOverrides = {};
+    for (const f of URL_FIELDS) {
+      const val = (draft[f.key] || "").trim();
+      if (val) clean[f.key] = val;
+    }
+    if (Object.keys(clean).length > 0) {
+      all[editingNetwork] = clean;
+    } else {
+      delete all[editingNetwork];
+    }
+    saveNetworkOverrides(all);
+    setEditingNetwork(null);
+    setSaved("Settings saved — takes effect on next request");
+    setTimeout(() => setSaved(""), 3000);
+  };
+
+  const handleReset = () => {
+    if (!editingNetwork) return;
+    const all = loadNetworkOverrides();
+    delete all[editingNetwork];
+    saveNetworkOverrides(all);
+    setEditingNetwork(null);
+    setSaved("Reset to defaults");
+    setTimeout(() => setSaved(""), 3000);
+  };
+
+  const allNetworks: NetworkId[] = ["mainnet", "testnet", "devnet"];
+
+  return (
+    <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700/50">
+      <h3 className="text-lg font-semibold text-gray-200 mb-4">Network Configuration</h3>
+
+      {saved && (
+        <div className="text-sm text-emerald-400 bg-emerald-500/10 rounded-lg px-3 py-2 mb-4">{saved}</div>
+      )}
+
+      <div className="space-y-2">
+        {allNetworks.map((id) => {
+          const cfg = getNetworkConfig(id);
+          const hasOverrides = !!loadNetworkOverrides()[id];
+          const isActive = id === currentNetwork;
+          const isEditing = editingNetwork === id;
+
+          return (
+            <div key={id}>
+              <button
+                type="button"
+                onClick={() => isEditing ? setEditingNetwork(null) : startEditing(id)}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-left transition-colors ${
+                  isEditing
+                    ? "bg-gray-700 border border-gray-600"
+                    : "bg-gray-900/50 border border-gray-700/50 hover:border-gray-600"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span
+                    className="w-2.5 h-2.5 rounded-full"
+                    style={{ backgroundColor: networks[id].color }}
+                  />
+                  <span className="text-sm font-medium text-gray-200">{networks[id].name}</span>
+                  {isActive && (
+                    <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded">Active</span>
+                  )}
+                  {hasOverrides && (
+                    <span className="text-[10px] bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded">Custom</span>
+                  )}
+                </div>
+                <svg className={`w-4 h-4 text-gray-500 transition-transform ${isEditing ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {isEditing && (
+                <div className="mt-2 bg-gray-900 rounded-xl p-4 space-y-3">
+                  {URL_FIELDS.map((f) => (
+                    <div key={f.key}>
+                      <label className="block text-xs text-gray-500 mb-1">{f.label}</label>
+                      <input
+                        type="text"
+                        value={draft[f.key] ?? ""}
+                        onChange={(e) => setDraft({ ...draft, [f.key]: e.target.value })}
+                        placeholder={networks[id][f.key as keyof typeof cfg] as string || "Not set"}
+                        className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-xs text-gray-200 placeholder-gray-600 font-mono focus:outline-none focus:border-emerald-500/50"
+                      />
+                    </div>
+                  ))}
+                  <div className="text-[10px] text-gray-600">Leave blank to use default</div>
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      onClick={handleSave}
+                      className="bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium px-4 py-1.5 rounded-lg transition-colors"
+                    >
+                      Save
+                    </button>
+                    {hasOverrides && (
+                      <button
+                        onClick={handleReset}
+                        className="bg-gray-700 hover:bg-gray-600 text-gray-300 text-sm px-4 py-1.5 rounded-lg transition-colors"
+                      >
+                        Reset to Default
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setEditingNetwork(null)}
+                      className="text-gray-500 text-sm px-3 py-1.5"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { networks, type NetworkId } from "./networks";
+import { getNetworkConfig, type NetworkId } from "./networks";
 import { httpFetch } from "./http";
 
 export interface FaucetStatus {
@@ -15,7 +15,7 @@ export interface FaucetDripResult {
 }
 
 export async function getFaucetStatus(network: NetworkId): Promise<FaucetStatus> {
-  const url = networks[network].faucetUrl;
+  const url = getNetworkConfig(network).faucetUrl;
   if (!url) throw new Error("Faucet not available on this network");
 
   const res = await httpFetch(`${url}/status`);
@@ -27,7 +27,7 @@ export async function requestDrip(
   network: NetworkId,
   accountId: string,
 ): Promise<FaucetDripResult> {
-  const url = networks[network].faucetUrl;
+  const url = getNetworkConfig(network).faucetUrl;
   if (!url) throw new Error("Faucet not available on this network");
 
   const res = await httpFetch(`${url}/drip`, {
