@@ -28,12 +28,14 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     return (localStorage.getItem("solen_network") as NetworkId) || DEFAULT_NETWORK;
   });
 
-  const hasPassword = !!localStorage.getItem("solen_pw_hash");
+  const [hasPassword, setHasPassword] = useState(
+    () => !!localStorage.getItem("solen_pw_hash"),
+  );
 
   // If password is set, start locked. Otherwise unlocked.
-  const [isLocked, setIsLocked] = useState(hasPassword);
+  const [isLocked, setIsLocked] = useState(() => !!localStorage.getItem("solen_pw_hash"));
   const [accounts, setAccounts] = useState<WalletAccount[]>(() => {
-    if (hasPassword) return []; // Don't load until unlocked
+    if (localStorage.getItem("solen_pw_hash")) return []; // Don't load until unlocked
     return loadAccounts();
   });
   const [activeAccount, setActiveAccount] = useState<WalletAccount | null>(null);
@@ -53,7 +55,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!hasPassword || isLocked) return;
-    // Reset timer on any user interaction
     const events = ["mousedown", "keydown", "touchstart", "scroll"];
     events.forEach((e) => window.addEventListener(e, resetTimer));
     resetTimer();
@@ -69,7 +70,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       const savedId = localStorage.getItem("solen_active_account");
       setActiveAccount(accounts.find((a) => a.accountId === savedId) || accounts[0]);
     }
-  }, [accounts]);
+  }, [accounts, activeAccount]);
 
   useEffect(() => {
     localStorage.setItem("solen_network", network);
@@ -81,20 +82,19 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     }
   }, [activeAccount]);
 
-  const lock = () => {
+  const lock = useCallback(() => {
     setIsLocked(true);
     setAccounts([]);
     setActiveAccount(null);
-  };
+  }, []);
 
-  const unlock = async (password: string): Promise<boolean> => {
+  const unlock = useCallback(async (password: string): Promise<boolean> => {
     const storedHash = localStorage.getItem("solen_pw_hash");
     if (!storedHash) return true;
 
     const inputHash = await hashPassword(password);
     if (inputHash !== storedHash) return false;
 
-    // Decrypt accounts
     try {
       const encryptedData = localStorage.getItem("solen_wallet_encrypted");
       if (encryptedData) {
@@ -117,9 +117,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     } catch {
       return false;
     }
-  };
+  }, [resetTimer]);
 
-  const setPasswordFn = async (password: string) => {
+  const setPasswordFn = useCallback(async (password: string) => {
     const pwHash = await hashPassword(password);
     localStorage.setItem("solen_pw_hash", pwHash);
 
@@ -131,32 +131,28 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem("solen_wallet_accounts");
     }
     setAccounts(currentAccounts);
-  };
+    setHasPassword(true);
+  }, [accounts]);
 
-  const addAccount = async (a: WalletAccount) => {
-    const updated = [...accounts, a];
-    setAccounts(updated);
-    if (!activeAccount) setActiveAccount(a);
-
-    // Persist
-    if (hasPassword || localStorage.getItem("solen_pw_hash")) {
-      // Re-encrypt with current session — need password in memory.
-      // For now, save plaintext and re-encrypt on next lock/unlock cycle.
-      // This is a trade-off: the encrypted blob is updated on lock.
+  const addAccount = useCallback((a: WalletAccount) => {
+    setAccounts((prev) => {
+      const updated = [...prev, a];
       saveAccounts(updated);
-    } else {
-      saveAccounts(updated);
-    }
-  };
+      return updated;
+    });
+    setActiveAccount((prev) => prev ?? a);
+  }, []);
 
-  const removeAccount = (accountId: string) => {
-    const updated = accounts.filter((a) => a.accountId !== accountId);
-    setAccounts(updated);
-    saveAccounts(updated);
-    if (activeAccount?.accountId === accountId) {
-      setActiveAccount(updated[0] || null);
-    }
-  };
+  const removeAccount = useCallback((accountId: string) => {
+    setAccounts((prev) => {
+      const updated = prev.filter((a) => a.accountId !== accountId);
+      saveAccounts(updated);
+      return updated;
+    });
+    setActiveAccount((prev) =>
+      prev?.accountId === accountId ? null : prev,
+    );
+  }, []);
 
   return (
     <WalletContext.Provider
