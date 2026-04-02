@@ -16,6 +16,28 @@ interface TokenInfo {
   name: string;
   symbol: string;
   balance: bigint;
+  decimals: number;
+}
+
+function formatTokenAmount(amount: bigint, decimals: number): string {
+  if (decimals === 0) return amount.toLocaleString();
+  const divisor = BigInt(10) ** BigInt(decimals);
+  const whole = amount / divisor;
+  const frac = amount % divisor;
+  if (frac === BigInt(0)) return whole.toLocaleString();
+  const fracStr = frac.toString().padStart(decimals, "0").replace(/0+$/, "");
+  return `${whole.toLocaleString()}.${fracStr}`;
+}
+
+function parseTokenAmount(input: string, decimals: number): bigint {
+  const parts = input.split(".");
+  const whole = BigInt(parts[0] || "0");
+  let frac = BigInt(0);
+  if (parts[1]) {
+    const fracStr = parts[1].slice(0, decimals).padEnd(decimals, "0");
+    frac = BigInt(fracStr);
+  }
+  return whole * BigInt(10) ** BigInt(decimals) + frac;
 }
 
 function hexToU128(hex: string): bigint {
@@ -53,10 +75,11 @@ export function TokenCard() {
 
       for (const contract of contracts) {
         try {
-          const [balRes, nameRes, symRes] = await Promise.all([
+          const [balRes, nameRes, symRes, decRes] = await Promise.all([
             callView(network, contract, "balance_of", activeAccount.accountId),
             callView(network, contract, "name"),
             callView(network, contract, "symbol"),
+            callView(network, contract, "decimals"),
           ]);
 
           const balance = balRes.success ? hexToU128(balRes.return_data) : BigInt(0);
@@ -66,8 +89,11 @@ export function TokenCard() {
           const symbol = symRes.success
             ? new TextDecoder().decode(hexToBytes(symRes.return_data))
             : "???";
+          const decimals = decRes.success && decRes.return_data.length >= 2
+            ? parseInt(decRes.return_data.slice(0, 2), 16)
+            : 8;
 
-          found.push({ contract, name, symbol, balance });
+          found.push({ contract, name, symbol, balance, decimals });
         } catch {
           // Contract not accessible.
         }
@@ -97,7 +123,8 @@ export function TokenCard() {
 
       // Build args: to[32] + amount[16 LE]
       const toHex = recipient.replace(/^0x/, "").padEnd(64, "0");
-      const amountBigInt = BigInt(amount);
+      const token = tokens.find((t) => t.contract === selectedToken);
+      const amountBigInt = parseTokenAmount(amount, token?.decimals ?? 8);
       const amountBytes = new Uint8Array(16);
       let val = amountBigInt;
       for (let i = 0; i < 16; i++) {
@@ -131,7 +158,6 @@ export function TokenCard() {
 
       await submitOperation(network, operation);
 
-      const token = tokens.find((t) => t.contract === selectedToken);
       setResult({
         success: true,
         message: `Sent ${amount} ${token?.symbol || "tokens"} to ${recipient.slice(0, 12)}...`,
@@ -174,7 +200,7 @@ export function TokenCard() {
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-400">Balance</span>
             <span className="text-xl font-bold text-purple-400">
-              {selected.balance.toLocaleString()} <span className="text-sm font-normal text-gray-500">{selected.symbol}</span>
+              {formatTokenAmount(selected.balance, selected.decimals)} <span className="text-sm font-normal text-gray-500">{selected.symbol}</span>
             </span>
           </div>
         )}
