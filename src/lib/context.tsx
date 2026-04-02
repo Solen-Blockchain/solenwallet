@@ -3,7 +3,17 @@ import { type NetworkId, DEFAULT_NETWORK } from "./networks";
 import { type WalletAccount, loadAccounts, saveAccounts } from "./wallet";
 import { encrypt, decrypt, hashPassword } from "./crypto";
 
-const AUTO_LOCK_MS = 10 * 60 * 1000; // 10 minutes
+const DEFAULT_LOCK_MS = 10 * 60 * 1000; // 10 minutes
+const LOCK_TIMEOUT_KEY = "solen_lock_timeout_ms";
+
+export const LOCK_TIMEOUT_OPTIONS = [
+  { label: "1 minute", ms: 60_000 },
+  { label: "5 minutes", ms: 300_000 },
+  { label: "10 minutes", ms: 600_000 },
+  { label: "30 minutes", ms: 1_800_000 },
+  { label: "1 hour", ms: 3_600_000 },
+  { label: "Never", ms: 0 },
+];
 
 interface WalletState {
   network: NetworkId;
@@ -16,9 +26,13 @@ interface WalletState {
   // Lock state
   isLocked: boolean;
   hasPassword: boolean;
+  lockTimeoutMs: number;
   unlock: (password: string) => Promise<boolean>;
   lock: () => void;
   setPassword: (password: string) => Promise<void>;
+  changePassword: (oldPassword: string, newPassword: string) => Promise<boolean>;
+  removePassword: (password: string) => Promise<boolean>;
+  setLockTimeout: (ms: number) => void;
 }
 
 const WalletContext = createContext<WalletState | null>(null);
@@ -30,6 +44,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const [hasPassword, setHasPassword] = useState(
     () => !!localStorage.getItem("solen_pw_hash"),
+  );
+
+  const [lockTimeoutMs, setLockTimeoutMs] = useState(
+    () => parseInt(localStorage.getItem(LOCK_TIMEOUT_KEY) || "") || DEFAULT_LOCK_MS,
   );
 
   // If password is set, start locked. Otherwise unlocked.
@@ -44,14 +62,14 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const resetTimer = useCallback(() => {
-    if (!hasPassword) return;
+    if (!hasPassword || lockTimeoutMs === 0) return;
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
       setIsLocked(true);
       setAccounts([]);
       setActiveAccount(null);
-    }, AUTO_LOCK_MS);
-  }, [hasPassword]);
+    }, lockTimeoutMs);
+  }, [hasPassword, lockTimeoutMs]);
 
   useEffect(() => {
     if (!hasPassword || isLocked) return;
@@ -134,6 +152,66 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     setHasPassword(true);
   }, [accounts]);
 
+  const changePasswordFn = useCallback(async (oldPassword: string, newPassword: string): Promise<boolean> => {
+    const storedHash = localStorage.getItem("solen_pw_hash");
+    if (!storedHash) return false;
+    const oldHash = await hashPassword(oldPassword);
+    if (oldHash !== storedHash) return false;
+
+    // Decrypt with old, re-encrypt with new
+    try {
+      const encryptedData = localStorage.getItem("solen_wallet_encrypted");
+      let accs: WalletAccount[] = [];
+      if (encryptedData) {
+        const json = await decrypt(encryptedData, oldPassword);
+        accs = JSON.parse(json);
+      } else {
+        accs = loadAccounts();
+      }
+
+      const newHash = await hashPassword(newPassword);
+      localStorage.setItem("solen_pw_hash", newHash);
+      if (accs.length > 0) {
+        const encrypted = await encrypt(JSON.stringify(accs), newPassword);
+        localStorage.setItem("solen_wallet_encrypted", encrypted);
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  const removePasswordFn = useCallback(async (password: string): Promise<boolean> => {
+    const storedHash = localStorage.getItem("solen_pw_hash");
+    if (!storedHash) return true;
+    const inputHash = await hashPassword(password);
+    if (inputHash !== storedHash) return false;
+
+    // Decrypt and save plaintext
+    try {
+      const encryptedData = localStorage.getItem("solen_wallet_encrypted");
+      if (encryptedData) {
+        const json = await decrypt(encryptedData, password);
+        const accs: WalletAccount[] = JSON.parse(json);
+        saveAccounts(accs);
+        setAccounts(accs);
+      }
+      localStorage.removeItem("solen_pw_hash");
+      localStorage.removeItem("solen_wallet_encrypted");
+      setHasPassword(false);
+      setIsLocked(false);
+      if (timerRef.current) clearTimeout(timerRef.current);
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  const handleSetLockTimeout = useCallback((ms: number) => {
+    setLockTimeoutMs(ms);
+    localStorage.setItem(LOCK_TIMEOUT_KEY, String(ms));
+  }, []);
+
   const addAccount = useCallback((a: WalletAccount) => {
     setAccounts((prev) => {
       const updated = [...prev, a];
@@ -164,10 +242,14 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     removeAccount,
     isLocked,
     hasPassword,
+    lockTimeoutMs,
     unlock,
     lock,
     setPassword: setPasswordFn,
-  }), [network, accounts, activeAccount, isLocked, hasPassword, unlock, lock, setPasswordFn, addAccount, removeAccount]);
+    changePassword: changePasswordFn,
+    removePassword: removePasswordFn,
+    setLockTimeout: handleSetLockTimeout,
+  }), [network, accounts, activeAccount, isLocked, hasPassword, lockTimeoutMs, unlock, lock, setPasswordFn, changePasswordFn, removePasswordFn, handleSetLockTimeout, addAccount, removeAccount]);
 
   return (
     <WalletContext.Provider value={value}>
