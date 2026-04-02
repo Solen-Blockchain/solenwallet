@@ -21,7 +21,7 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: tauri: https: http:; img-src 'self' data: blob: https: http:; connect-src 'self' https: http: tauri: ipc:"
     }
   },
   "bundle": {

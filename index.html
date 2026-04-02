@@ -7,6 +7,20 @@
   </head>
   <body class="bg-gray-950 text-gray-100">
     <div id="root"></div>
+    <script>
+      window.addEventListener('error', function(e) {
+        document.getElementById('root').innerHTML =
+          '<pre style="padding:40px;color:#f87171;font-family:monospace;white-space:pre-wrap">' +
+          'JS Error: ' + e.message + '\n' + (e.filename || '') + ':' + (e.lineno || '') +
+          '\n\n' + (e.error && e.error.stack ? e.error.stack : '') + '</pre>';
+      });
+      window.addEventListener('unhandledrejection', function(e) {
+        document.getElementById('root').innerHTML =
+          '<pre style="padding:40px;color:#f87171;font-family:monospace;white-space:pre-wrap">' +
+          'Unhandled Promise: ' + (e.reason && e.reason.message ? e.reason.message : e.reason) +
+          '\n\n' + (e.reason && e.reason.stack ? e.reason.stack : '') + '</pre>';
+      });
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
