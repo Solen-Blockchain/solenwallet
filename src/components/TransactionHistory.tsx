@@ -68,73 +68,23 @@ export function TransactionHistory() {
     }
   }, [network, activeAccount]);
 
+  // Token symbol cache + lookup.
+  const [tokenSymbols, setTokenSymbols] = useState<Record<string, string>>({});
+
   useEffect(() => {
     fetchTxs();
     const interval = setInterval(fetchTxs, 10000);
     return () => clearInterval(interval);
   }, [fetchTxs]);
 
-  if (!activeAccount) return null;
-
-  const truncate = (s: string) => `${s.slice(0, 10)}...${s.slice(-6)}`;
-
-  const getTransferInfo = (tx: Transaction) => {
-    // Prefer native transfer (emitter == sender).
-    const nativeTransfer = tx.events.find((e) => e.topic === "transfer" && e.emitter === tx.sender);
-    if (nativeTransfer) {
-      const info = parseTransferEvent(nativeTransfer.data);
-      return info ? { ...info, tokenContract: undefined as string | undefined } : null;
-    }
-    // Token transfer (emitter is a contract).
-    const tokenTransfer = tx.events.find((e) => e.topic === "transfer" && e.emitter !== tx.sender);
-    if (tokenTransfer) {
-      const info = parseTransferEvent(tokenTransfer.data);
-      return info ? { ...info, tokenContract: tokenTransfer.emitter } : null;
-    }
-    return null;
-  };
-
-  const getStakeInfo = (tx: Transaction) => {
-    const event = tx.events.find((e) => e.topic === "delegate" || e.topic === "undelegate");
-    if (!event) return null;
-    // Data: validator[64 hex] + amount[32 hex LE u128]
-    if (event.data.length >= 96) {
-      return { amount: leHexToAmount(event.data.slice(64, 96)), type: event.topic };
-    }
-    // Old format: just amount
-    if (event.data.length >= 32) {
-      return { amount: leHexToAmount(event.data.slice(0, 32)), type: event.topic };
-    }
-    return null;
-  };
-
-  const getRewardInfo = (tx: Transaction) => {
-    if (!activeAccount) return null;
-    // Find reward events for THIS account specifically.
-    const myRewardEvents = tx.events.filter((e) => {
-      if (e.topic !== "epoch_reward" && e.topic !== "delegator_reward") return false;
-      if (e.data.length < 96) return false;
-      const recipient = e.data.slice(0, 64);
-      return recipient === activeAccount.accountId;
-    });
-    if (myRewardEvents.length === 0) return null;
-    // Sum all matching reward events for this account.
-    let total = BigInt(0);
-    for (const event of myRewardEvents) {
-      total += BigInt(leHexToAmount(event.data.slice(64, 96)));
-    }
-    return { amount: total.toString() };
-  };
-
-  // Token symbol cache + lookup.
-  const [tokenSymbols, setTokenSymbols] = useState<Record<string, string>>({});
-
   useEffect(() => {
+    if (txs.length === 0) return;
     const contracts = new Set<string>();
     for (const tx of txs) {
-      const info = getTransferInfo(tx);
-      if (info?.tokenContract) {
-        contracts.add(info.tokenContract);
+      for (const e of tx.events) {
+        if (e.topic === "transfer" && e.emitter !== tx.sender) {
+          contracts.add(e.emitter);
+        }
       }
     }
     if (contracts.size === 0) return;
@@ -164,6 +114,52 @@ export function TransactionHistory() {
     });
     return () => { cancelled = true; };
   }, [txs, network]);
+
+  if (!activeAccount) return null;
+
+  const truncate = (s: string) => `${s.slice(0, 10)}...${s.slice(-6)}`;
+
+  const getTransferInfo = (tx: Transaction) => {
+    const nativeTransfer = tx.events.find((e) => e.topic === "transfer" && e.emitter === tx.sender);
+    if (nativeTransfer) {
+      const info = parseTransferEvent(nativeTransfer.data);
+      return info ? { ...info, tokenContract: undefined as string | undefined } : null;
+    }
+    const tokenTransfer = tx.events.find((e) => e.topic === "transfer" && e.emitter !== tx.sender);
+    if (tokenTransfer) {
+      const info = parseTransferEvent(tokenTransfer.data);
+      return info ? { ...info, tokenContract: tokenTransfer.emitter } : null;
+    }
+    return null;
+  };
+
+  const getStakeInfo = (tx: Transaction) => {
+    const event = tx.events.find((e) => e.topic === "delegate" || e.topic === "undelegate");
+    if (!event) return null;
+    if (event.data.length >= 96) {
+      return { amount: leHexToAmount(event.data.slice(64, 96)), type: event.topic };
+    }
+    if (event.data.length >= 32) {
+      return { amount: leHexToAmount(event.data.slice(0, 32)), type: event.topic };
+    }
+    return null;
+  };
+
+  const getRewardInfo = (tx: Transaction) => {
+    if (!activeAccount) return null;
+    const myRewardEvents = tx.events.filter((e) => {
+      if (e.topic !== "epoch_reward" && e.topic !== "delegator_reward") return false;
+      if (e.data.length < 96) return false;
+      const recipient = e.data.slice(0, 64);
+      return recipient === activeAccount.accountId;
+    });
+    if (myRewardEvents.length === 0) return null;
+    let total = BigInt(0);
+    for (const event of myRewardEvents) {
+      total += BigInt(leHexToAmount(event.data.slice(64, 96)));
+    }
+    return { amount: total.toString() };
+  };
 
   const getTxType = (tx: Transaction): string => {
     const transfer = getTransferInfo(tx);
