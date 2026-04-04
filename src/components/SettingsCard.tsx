@@ -238,7 +238,7 @@ export function SettingsCard() {
         <div className="space-y-2 text-sm text-gray-400">
           <div className="flex justify-between">
             <span>Version</span>
-            <span className="text-gray-300">0.1.0</span>
+            <span className="text-gray-300">{__APP_VERSION__}</span>
           </div>
           <div className="flex justify-between">
             <span>Storage</span>

@@ -260,7 +260,7 @@ export function TokenCard() {
             type="text"
             value={recipient}
             onChange={(e) => setRecipient(e.target.value)}
-            placeholder="Recipient account ID (hex)"
+            placeholder="Recipient address (Base58 or hex)"
             className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-purple-500/50 font-mono"
           />
 

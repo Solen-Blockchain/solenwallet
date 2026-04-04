@@ -121,7 +121,20 @@ const STORAGE_KEY = "solen_wallet_accounts";
 export function loadAccounts(): WalletAccount[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) return [];
+    const accounts: WalletAccount[] = JSON.parse(raw);
+    // Migrate old hex accountIds to Base58.
+    let migrated = false;
+    for (const acc of accounts) {
+      if (acc.accountId.length === 64 && /^[0-9a-fA-F]+$/.test(acc.accountId)) {
+        acc.accountId = publicKeyToAccountId(acc.accountId);
+        migrated = true;
+      }
+    }
+    if (migrated) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(accounts));
+    }
+    return accounts;
   } catch {
     return [];
   }
