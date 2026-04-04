@@ -30,7 +30,7 @@ export const networks: Record<NetworkId, NetworkConfig> = {
     chainId: 9000,
     rpcUrl: "https://testnet-rpc.solenchain.io",
     explorerApiUrl: "https://testnet-api.solenchain.io",
-    explorerUrl: "https://explorer.solenchain.io",
+    explorerUrl: "https://solenscan.io",
     faucetUrl: "https://testnet-faucet.solenchain.io",
     color: "#f59e0b",
     enabled: true,
