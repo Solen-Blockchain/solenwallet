@@ -116,6 +116,18 @@ jobs:
           echo '# Windows (PowerShell)' >> ../checksums.md
           echo 'Get-FileHash .\Solen_Wallet_*-setup.exe -Algorithm SHA256' >> ../checksums.md
           echo '```' >> ../checksums.md
+          echo '' >> ../checksums.md
+          echo '## macOS Note' >> ../checksums.md
+          echo '' >> ../checksums.md
+          echo 'macOS may show **"Solen Wallet is damaged and can'\''t be opened"** because the app is not yet notarized with Apple. This is a Gatekeeper restriction, not an actual issue with the app.' >> ../checksums.md
+          echo '' >> ../checksums.md
+          echo 'To fix, run this in Terminal after installing:' >> ../checksums.md
+          echo '' >> ../checksums.md
+          echo '```bash' >> ../checksums.md
+          echo 'xattr -cr /Applications/Solen\ Wallet.app' >> ../checksums.md
+          echo '```' >> ../checksums.md
+          echo '' >> ../checksums.md
+          echo 'Then open the app normally. This only needs to be done once. We are working on Apple notarization for future releases.' >> ../checksums.md
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
