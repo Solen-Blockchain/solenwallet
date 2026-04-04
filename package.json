@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "bundle": "tauri build",
+    "bundle:debug": "tauri build --debug"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.10.1",
