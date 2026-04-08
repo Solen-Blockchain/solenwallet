@@ -232,9 +232,7 @@ export function TransactionHistory() {
                     const sent = isSent(tx);
                     const isToken = !!transfer.tokenContract;
                     const sym = transfer.tokenContract ? (tokenSymbols[transfer.tokenContract] || "tokens") : "SOLEN";
-                    const displayAmount = isToken
-                      ? Number(transfer.amount).toLocaleString()
-                      : formatBalance(transfer.amount);
+                    const displayAmount = formatBalance(transfer.amount);
                     return (
                       <div className={`text-sm font-medium ${isToken ? "text-purple-400" : sent ? "text-red-400" : "text-emerald-400"}`}>
                         {sent ? "-" : "+"}{displayAmount} {sym}
