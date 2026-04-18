@@ -30,7 +30,7 @@ export function AccountSelector() {
       </button>
 
       {open && (
-        <div className="absolute top-full mt-1 right-0 w-64 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-50 overflow-hidden">
+        <div className="absolute top-full mt-1 right-0 w-64 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-50 overflow-y-auto max-h-80">
           {accounts.map((acc) => (
             <button
               key={acc.accountId}

@@ -161,7 +161,22 @@ export function TransactionHistory() {
     return { amount: total.toString() };
   };
 
+  const getBridgeInfo = (tx: Transaction) => {
+    const deposit = tx.events.find((e) => e.topic === "bridge_deposit" && e.data.length >= 136);
+    if (deposit) {
+      return { type: "deposit" as const, amount: leHexToAmount(deposit.data.slice(104, 136)) };
+    }
+    const release = tx.events.find((e) => e.topic === "bridge_release" && e.data.length >= 96);
+    if (release) {
+      return { type: "release" as const, amount: leHexToAmount(release.data.slice(64, 96)) };
+    }
+    return null;
+  };
+
   const getTxType = (tx: Transaction): string => {
+    const bridge = getBridgeInfo(tx);
+    if (bridge?.type === "deposit") return "Bridge → Base";
+    if (bridge?.type === "release") return "Bridge → Solen";
     const transfer = getTransferInfo(tx);
     if (transfer?.tokenContract) return "Token Transfer";
     if (transfer) return "Transfer";
@@ -227,6 +242,14 @@ export function TransactionHistory() {
               </div>
               <div className="text-right">
                 {(() => {
+                  const bridge = getBridgeInfo(tx);
+                  if (bridge) {
+                    return (
+                      <div className="text-sm font-medium text-indigo-400">
+                        {bridge.type === "deposit" ? "→ " : "← "}{formatBalance(bridge.amount)} SOLEN
+                      </div>
+                    );
+                  }
                   const transfer = getTransferInfo(tx);
                   if (transfer) {
                     const sent = isSent(tx);

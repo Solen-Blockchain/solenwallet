@@ -48,7 +48,7 @@ export const networks: Record<NetworkId, NetworkConfig> = {
   },
 };
 
-export const DEFAULT_NETWORK: NetworkId = "testnet";
+export const DEFAULT_NETWORK: NetworkId = "mainnet";
 
 const OVERRIDES_KEY = "solen_network_overrides";
 
