@@ -4,6 +4,7 @@ import { getNetworkConfig } from "../lib/networks";
 import { httpFetch } from "../lib/http";
 import { callView } from "../lib/rpc";
 import { formatBalance } from "../lib/wallet";
+import { openUrl } from "../lib/open";
 
 // Parse a little-endian u128 hex string to a BigInt
 function leHexToAmount(hex: string): string {
@@ -214,10 +215,21 @@ export function TransactionHistory() {
         </div>
       ) : (
         <div className="space-y-2">
-          {txs.map((tx, i) => (
+          {txs.map((tx, i) => {
+            const explorerUrl = getNetworkConfig(network).explorerUrl;
+            return (
             <div
               key={`${tx.block_height}-${tx.index}-${i}`}
-              className="flex items-center justify-between p-3 bg-gray-900/50 rounded-lg"
+              role="button"
+              tabIndex={0}
+              onClick={() => openUrl(`${explorerUrl}/tx/${tx.block_height}/${tx.index}`)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  openUrl(`${explorerUrl}/tx/${tx.block_height}/${tx.index}`);
+                }
+              }}
+              className="flex items-center justify-between p-3 bg-gray-900/50 hover:bg-gray-900/80 rounded-lg cursor-pointer transition-colors"
             >
               <div className="flex items-center gap-3">
                 <div
@@ -232,7 +244,21 @@ export function TransactionHistory() {
                 <div>
                   <div className="text-sm text-gray-300">
                     {getTxType(tx)}
-                    {isSent(tx) ? "" : ` from ${truncate(tx.sender)}`}
+                    {isSent(tx) ? "" : (
+                      <>
+                        {" from "}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openUrl(`${explorerUrl}/account/${tx.sender}`);
+                          }}
+                          className="font-mono text-gray-300 hover:text-purple-400 transition-colors"
+                          title={tx.sender}
+                        >
+                          {truncate(tx.sender)}
+                        </button>
+                      </>
+                    )}
                   </div>
                   <div className="text-xs text-gray-500">
                     {tx.success ? "Success" : `Failed: ${tx.error || "unknown"}`}
@@ -281,12 +307,19 @@ export function TransactionHistory() {
                   }
                   return null;
                 })()}
-                <div className="text-xs text-gray-500">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openUrl(`${explorerUrl}/block/${tx.block_height}`);
+                  }}
+                  className="text-xs text-gray-500 hover:text-purple-400 transition-colors"
+                >
                   Block #{tx.block_height}
-                </div>
+                </button>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
