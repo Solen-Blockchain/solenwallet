@@ -83,7 +83,15 @@ export interface WalletAccount {
   name: string;
   accountId: string; // Base58, derived from public key
   publicKey: string;
-  secretKey: string; // encrypted or raw for now
+  secretKey: string; // hex; for HD accounts this is re-derived from the
+                     // mnemonic at unlock and not persisted to the keystore.
+  /** If present, this account was derived from a stored mnemonic.
+   *  The secretKey above is re-derived after each unlock; the canonical
+   *  source of truth is `{mnemonicId, derivationIndex}` in the keystore. */
+  hd?: {
+    mnemonicId: string;
+    derivationIndex: number;
+  };
 }
 
 export async function generateKeypair(): Promise<Keypair> {
@@ -116,32 +124,43 @@ export function publicKeyToAccountId(pubKeyHex: string): string {
   return base58Encode(hexToBytes(pubKeyHex));
 }
 
-const STORAGE_KEY = "solen_wallet_accounts";
+// loadAccounts/saveAccounts are the legacy API used by existing UI. They now
+// route through the v2 keystore (see ./keystore.ts) but expose the unchanged
+// WalletAccount[] shape so callers don't need to change. HD-derived accounts
+// (kind: "hd") are not surfaced through this API — phase 2 UI will use the
+// keystore module directly.
+import {
+  loadKeystore,
+  saveKeystore,
+  type StoredKey,
+} from "./keystore";
 
 export function loadAccounts(): WalletAccount[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const accounts: WalletAccount[] = JSON.parse(raw);
-    // Migrate old hex accountIds to Base58.
-    let migrated = false;
-    for (const acc of accounts) {
-      if (acc.accountId.length === 64 && /^[0-9a-fA-F]+$/.test(acc.accountId)) {
-        acc.accountId = publicKeyToAccountId(acc.accountId);
-        migrated = true;
-      }
+  const ks = loadKeystore();
+  // Migrate old 64-char-hex accountIds to Base58 in-place. Mirrors the
+  // pre-v2 migration behavior — kept for users upgrading across both
+  // boundaries simultaneously.
+  let migrated = false;
+  for (const acc of ks.accounts) {
+    if (acc.kind === "key" &&
+        acc.accountId.length === 64 &&
+        /^[0-9a-fA-F]+$/.test(acc.accountId)) {
+      acc.accountId = publicKeyToAccountId(acc.accountId);
+      migrated = true;
     }
-    if (migrated) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(accounts));
-    }
-    return accounts;
-  } catch {
-    return [];
   }
+  if (migrated) saveKeystore(ks);
+
+  return ks.accounts
+    .filter((a): a is StoredKey & { kind: "key" } => a.kind === "key")
+    .map(({ kind: _kind, ...rest }) => rest);
 }
 
 export function saveAccounts(accounts: WalletAccount[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(accounts));
+  const ks = loadKeystore();
+  const hdOnly = ks.accounts.filter((a) => a.kind === "hd");
+  const keyAccounts: StoredKey[] = accounts.map((a) => ({ kind: "key", ...a }));
+  saveKeystore({ ...ks, accounts: [...hdOnly, ...keyAccounts] });
 }
 
 export async function createAccount(name: string): Promise<WalletAccount> {

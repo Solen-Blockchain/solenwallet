@@ -229,6 +229,9 @@ export function SettingsCard() {
         </div>
       </div>
 
+      {/* Recovery phrases */}
+      <RecoveryPhrasesPanel />
+
       {/* Network */}
       <NetworkSettings currentNetwork={network} />
 
@@ -249,6 +252,135 @@ export function SettingsCard() {
             <span className="text-gray-300">{hasPassword ? "AES-256-GCM + PBKDF2" : "None"}</span>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function RecoveryPhrasesPanel() {
+  const { mnemonics, revealMnemonic } = useWallet();
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [pw, setPw] = useState("");
+  const [revealed, setRevealed] = useState<{ id: string; words: string } | null>(null);
+  const [error, setError] = useState("");
+
+  if (mnemonics.length === 0) return null;
+
+  const startReveal = (id: string) => {
+    setActiveId(id);
+    setRevealed(null);
+    setPw("");
+    setError("");
+  };
+
+  const cancel = () => {
+    setActiveId(null);
+    setRevealed(null);
+    setPw("");
+    setError("");
+  };
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeId) return;
+    setError("");
+    const words = await revealMnemonic(pw, activeId);
+    if (!words) {
+      setError("Incorrect password");
+      return;
+    }
+    setRevealed({ id: activeId, words });
+    setPw("");
+  };
+
+  return (
+    <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700/50">
+      <h3 className="text-lg font-semibold text-gray-200 mb-4">Recovery Phrases</h3>
+      <div className="text-xs text-gray-500 mb-4">
+        Backups for HD accounts. Anyone with a phrase can spend the funds it secures.
+      </div>
+
+      <div className="space-y-2">
+        {mnemonics.map((m) => {
+          const isActive = activeId === m.id;
+          const showRevealed = revealed?.id === m.id;
+          return (
+            <div key={m.id} className="bg-gray-900/50 border border-gray-700/50 rounded-xl p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-medium text-gray-200">{m.label}</div>
+                  <div className="text-xs text-gray-500 font-mono">{m.id.slice(0, 8)}…</div>
+                </div>
+                {!isActive && (
+                  <button
+                    onClick={() => startReveal(m.id)}
+                    className="text-sm bg-gray-700 hover:bg-gray-600 text-gray-300 px-3 py-1.5 rounded-lg transition-colors"
+                  >
+                    Reveal
+                  </button>
+                )}
+                {isActive && !showRevealed && (
+                  <button
+                    onClick={cancel}
+                    className="text-sm text-gray-500 hover:text-gray-300 px-3 py-1.5"
+                  >
+                    Cancel
+                  </button>
+                )}
+                {isActive && showRevealed && (
+                  <button
+                    onClick={cancel}
+                    className="text-sm bg-gray-700 hover:bg-gray-600 text-gray-300 px-3 py-1.5 rounded-lg transition-colors"
+                  >
+                    Hide
+                  </button>
+                )}
+              </div>
+
+              {isActive && !showRevealed && (
+                <form onSubmit={submit} className="mt-3 space-y-2">
+                  <input
+                    type="password"
+                    value={pw}
+                    onChange={(e) => setPw(e.target.value)}
+                    placeholder="Re-enter wallet password"
+                    autoFocus
+                    className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-emerald-500/50"
+                  />
+                  {error && <div className="text-sm text-red-400">{error}</div>}
+                  <button
+                    type="submit"
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+                  >
+                    Show Recovery Phrase
+                  </button>
+                </form>
+              )}
+
+              {isActive && showRevealed && (
+                <div className="mt-3 space-y-3">
+                  <div className="text-sm text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-md p-3">
+                    Don't screenshot, share, or paste this phrase anywhere online.
+                  </div>
+                  <div className="bg-gray-900 border border-gray-700 rounded-lg p-3 grid grid-cols-3 gap-2 text-sm font-mono">
+                    {revealed.words.split(" ").map((word, i) => (
+                      <div key={i} className="flex items-baseline gap-1.5">
+                        <span className="text-gray-600 text-xs w-6 text-right">{i + 1}.</span>
+                        <span className="text-gray-200">{word}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => navigator.clipboard.writeText(revealed.words)}
+                    className="w-full text-xs text-gray-400 hover:text-gray-200 transition-colors py-1"
+                  >
+                    Copy to clipboard (use only on a trusted device)
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
