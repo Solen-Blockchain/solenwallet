@@ -5,6 +5,7 @@ import { BalanceCard } from "./components/BalanceCard";
 import { SendForm } from "./components/SendForm";
 import { FaucetCard } from "./components/FaucetCard";
 import { StakingCard } from "./components/StakingCard";
+import { StakeStsolenCard } from "./components/StakeStsolenCard";
 import { VestingCard } from "./components/VestingCard";
 import { TokenCard } from "./components/TokenCard";
 import { TransactionHistory } from "./components/TransactionHistory";
@@ -99,6 +100,7 @@ function TabContent({ tab }: { tab: Tab }) {
     case "staking":
       return (
         <div className="space-y-6">
+          <StakeStsolenCard />
           <StakingCard />
           <VestingCard />
         </div>
