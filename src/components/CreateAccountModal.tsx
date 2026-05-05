@@ -18,6 +18,7 @@ export function CreateAccountModal({ open, onClose }: Props) {
     addAccountFromMnemonic,
     mnemonics,
     hasPassword,
+    setPassword,
   } = useWallet();
   const [tab, setTab] = useState<Tab>("create");
 
@@ -25,6 +26,10 @@ export function CreateAccountModal({ open, onClose }: Props) {
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  // Inline password setup (shown on first run when no password exists)
+  const [newPw, setNewPw] = useState("");
+  const [newPwConfirm, setNewPwConfirm] = useState("");
 
   // Create flow
   const [createStep, setCreateStep] = useState<CreateStep>("name");
@@ -46,6 +51,8 @@ export function CreateAccountModal({ open, onClose }: Props) {
     setName("");
     setError(null);
     setBusy(false);
+    setNewPw("");
+    setNewPwConfirm("");
     setCreateStep("name");
     setGeneratedMnemonic("");
     setBackedUp(false);
@@ -53,6 +60,21 @@ export function CreateAccountModal({ open, onClose }: Props) {
     setImportPhrase("");
     setSecretKey("");
     setTab("create");
+  };
+
+  // Validate + apply inline password if needed. Returns true on success.
+  const ensurePassword = async (): Promise<boolean> => {
+    if (hasPassword) return true;
+    if (newPw.length < 6) {
+      setError("Password must be at least 6 characters");
+      return false;
+    }
+    if (newPw !== newPwConfirm) {
+      setError("Passwords don't match");
+      return false;
+    }
+    await setPassword(newPw);
+    return true;
   };
 
   const close = () => {
@@ -81,12 +103,9 @@ export function CreateAccountModal({ open, onClose }: Props) {
       }
       return;
     }
-    if (!hasPassword) {
-      setError("Set a password in Settings before creating a recovery phrase");
-      return;
-    }
     setBusy(true);
     try {
+      if (!(await ensurePassword())) return;
       const { mnemonic } = await createMnemonicAccount(name.trim());
       setGeneratedMnemonic(mnemonic);
       setCreateStep("show");
@@ -113,12 +132,9 @@ export function CreateAccountModal({ open, onClose }: Props) {
       setError("Please enter an account name");
       return;
     }
-    if (!hasPassword) {
-      setError("Set a password in Settings before importing a recovery phrase");
-      return;
-    }
     setBusy(true);
     try {
+      if (!(await ensurePassword())) return;
       await importMnemonicAccount(name.trim(), importPhrase);
       close();
     } catch (e) {
@@ -257,8 +273,25 @@ export function CreateAccountModal({ open, onClose }: Props) {
             )}
 
             {!hasPassword && !useExistingMnemonicId && (
-              <div className="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/30 rounded-md p-3">
-                A wallet password is required to create a recovery phrase. Set one in Settings, or use "Import Key" to import an existing private key without a password.
+              <div className="space-y-2">
+                <label className="block text-sm text-gray-400">Wallet Password</label>
+                <input
+                  type="password"
+                  value={newPw}
+                  onChange={(e) => { setNewPw(e.target.value); setError(null); }}
+                  placeholder="Set a password (min 6 chars)"
+                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-emerald-500/50"
+                />
+                <input
+                  type="password"
+                  value={newPwConfirm}
+                  onChange={(e) => { setNewPwConfirm(e.target.value); setError(null); }}
+                  placeholder="Confirm password"
+                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-emerald-500/50"
+                />
+                <div className="text-xs text-gray-500">
+                  Encrypts your recovery phrase on this device. You'll be asked for it to unlock the wallet and reveal the phrase.
+                </div>
               </div>
             )}
 
@@ -347,8 +380,25 @@ export function CreateAccountModal({ open, onClose }: Props) {
             </div>
 
             {!hasPassword && (
-              <div className="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/30 rounded-md p-3">
-                A wallet password is required to import a recovery phrase. Set one in Settings first.
+              <div className="space-y-2">
+                <label className="block text-sm text-gray-400">Wallet Password</label>
+                <input
+                  type="password"
+                  value={newPw}
+                  onChange={(e) => { setNewPw(e.target.value); setError(null); }}
+                  placeholder="Set a password (min 6 chars)"
+                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-emerald-500/50"
+                />
+                <input
+                  type="password"
+                  value={newPwConfirm}
+                  onChange={(e) => { setNewPwConfirm(e.target.value); setError(null); }}
+                  placeholder="Confirm password"
+                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-emerald-500/50"
+                />
+                <div className="text-xs text-gray-500">
+                  Encrypts your recovery phrase on this device.
+                </div>
               </div>
             )}
 
