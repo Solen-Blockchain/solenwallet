@@ -44,6 +44,9 @@ export interface AccountInfo {
   balance: string;
   nonce: number;
   code_hash: string | null;
+  /** Externally-tagged auth methods, e.g. {"Ed25519":{"public_key":[…]}} or
+   *  {"Session":{…}}. Used to list agents and compose SetAuth without clobbering. */
+  auth_methods?: Array<Record<string, unknown>>;
 }
 
 export interface BlockInfo {
@@ -153,6 +156,12 @@ function hexToNumberArray(hex: string): number[] {
 
 export function submitOperation(network: NetworkId, operation: UserOperation) {
   return rpcCall<{ op_hash: string }>(network, "solen_submitOperation", [toRustOperation(operation)]);
+}
+
+/** Submit an operation already in rust serde format (e.g. a SetAuth composed
+ *  from getAccount.auth_methods). Bypasses toRustOperation. */
+export function submitRustOperation(network: NetworkId, rustOp: unknown) {
+  return rpcCall<{ op_hash: string }>(network, "solen_submitOperation", [rustOp]);
 }
 
 export function simulateOperation(network: NetworkId, operation: UserOperation) {
