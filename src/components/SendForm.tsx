@@ -96,7 +96,7 @@ export function SendForm() {
             value={recipient}
             onChange={(e) => setRecipient(e.target.value)}
             placeholder="Account address (Base58 or hex)"
-            className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 font-mono"
+            className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-solen-orange/50 font-mono"
           />
         </div>
 
@@ -108,7 +108,7 @@ export function SendForm() {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="0.00"
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2.5 pr-20 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-emerald-500/50"
+              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2.5 pr-20 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-solen-orange/50"
             />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">
               SOLEN
@@ -139,7 +139,7 @@ export function SendForm() {
         <button
           type="submit"
           disabled={sending || !recipient || !amount}
-          className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:bg-gray-700 disabled:text-gray-500 text-white font-medium py-2.5 rounded-lg transition-colors"
+          className="w-full bg-solen-orange hover:bg-solen-orange-light disabled:bg-gray-700 disabled:text-gray-500 text-white font-medium py-2.5 rounded-lg transition-colors"
         >
           {sending
             ? mevProtected ? "Encrypting & Submitting..." : "Sending..."

@@ -18,7 +18,7 @@ export function AccountDetails() {
 
   const CopyIcon = ({ label }: { label: string }) =>
     copied === label ? (
-      <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg className="w-4 h-4 text-solen-orange" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
       </svg>
     ) : (
@@ -203,7 +203,7 @@ function PrintPreviewModal({
           <div className="flex gap-2">
             <button
               onClick={handlePrint}
-              className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 bg-solen-orange hover:bg-solen-orange-light text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -224,10 +224,10 @@ function PrintPreviewModal({
         <div className="overflow-y-auto p-6">
           {/* Preview — also used as print content */}
           <div className="print-content bg-white text-gray-900 rounded-xl p-8 shadow-inner text-sm">
-            <div className="flex items-center gap-3 mb-6 pb-3 border-b-2 border-emerald-500">
+            <div className="flex items-center gap-3 mb-6 pb-3 border-b-2 border-solen-orange">
               <div>
                 <div className="text-xl font-bold">
-                  <span className="text-emerald-600">Solen</span>
+                  <span className="text-solen-orange">Solen</span>
                   <span className="text-gray-400"> Wallet</span>
                 </div>
                 <div className="text-xs text-gray-400 mt-1">Account Backup &middot; {now}</div>

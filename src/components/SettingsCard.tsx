@@ -114,7 +114,7 @@ export function SettingsCard() {
               ) : (
                 <button
                   onClick={() => { resetPwForms(); setShowSetPw(true); }}
-                  className="text-sm bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg transition-colors"
+                  className="text-sm bg-solen-orange hover:bg-solen-orange-light text-white px-3 py-1.5 rounded-lg transition-colors"
                 >
                   Set Password
                 </button>
@@ -136,18 +136,18 @@ export function SettingsCard() {
                 onChange={(e) => setSetPwVal(e.target.value)}
                 placeholder="New password (min 6 chars)"
                 autoFocus
-                className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-emerald-500/50"
+                className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-solen-orange/50"
               />
               <input
                 type="password"
                 value={setPwConfirm}
                 onChange={(e) => setSetPwConfirm(e.target.value)}
                 placeholder="Confirm password"
-                className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-emerald-500/50"
+                className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-solen-orange/50"
               />
               {pwError && <div className="text-sm text-red-400">{pwError}</div>}
               <div className="flex gap-2">
-                <button type="submit" className="bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">Set Password</button>
+                <button type="submit" className="bg-solen-orange hover:bg-solen-orange-light text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">Set Password</button>
                 <button type="button" onClick={resetPwForms} className="text-gray-400 text-sm px-4 py-2">Cancel</button>
               </div>
             </form>
@@ -163,25 +163,25 @@ export function SettingsCard() {
                 onChange={(e) => setOldPw(e.target.value)}
                 placeholder="Current password"
                 autoFocus
-                className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-emerald-500/50"
+                className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-solen-orange/50"
               />
               <input
                 type="password"
                 value={newPw}
                 onChange={(e) => setNewPw(e.target.value)}
                 placeholder="New password (min 6 chars)"
-                className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-emerald-500/50"
+                className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-solen-orange/50"
               />
               <input
                 type="password"
                 value={confirmPw}
                 onChange={(e) => setConfirmPw(e.target.value)}
                 placeholder="Confirm new password"
-                className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-emerald-500/50"
+                className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-solen-orange/50"
               />
               {pwError && <div className="text-sm text-red-400">{pwError}</div>}
               <div className="flex gap-2">
-                <button type="submit" className="bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">Change Password</button>
+                <button type="submit" className="bg-solen-orange hover:bg-solen-orange-light text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">Change Password</button>
                 <button type="button" onClick={resetPwForms} className="text-gray-400 text-sm px-4 py-2">Cancel</button>
               </div>
             </form>
@@ -198,7 +198,7 @@ export function SettingsCard() {
                 onChange={(e) => setRemovePwVal(e.target.value)}
                 placeholder="Current password"
                 autoFocus
-                className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-emerald-500/50"
+                className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-solen-orange/50"
               />
               {pwError && <div className="text-sm text-red-400">{pwError}</div>}
               <div className="flex gap-2">
@@ -218,7 +218,7 @@ export function SettingsCard() {
               <select
                 value={lockTimeoutMs}
                 onChange={(e) => setLockTimeout(Number(e.target.value))}
-                className="bg-gray-900 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-gray-300 focus:outline-none focus:border-emerald-500/50"
+                className="bg-gray-900 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-gray-300 focus:outline-none focus:border-solen-orange/50"
               >
                 {LOCK_TIMEOUT_OPTIONS.map((opt) => (
                   <option key={opt.ms} value={opt.ms}>{opt.label}</option>
@@ -345,12 +345,12 @@ function RecoveryPhrasesPanel() {
                     onChange={(e) => setPw(e.target.value)}
                     placeholder="Re-enter wallet password"
                     autoFocus
-                    className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-emerald-500/50"
+                    className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-solen-orange/50"
                   />
                   {error && <div className="text-sm text-red-400">{error}</div>}
                   <button
                     type="submit"
-                    className="bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+                    className="bg-solen-orange hover:bg-solen-orange-light text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
                   >
                     Show Recovery Phrase
                   </button>
@@ -491,7 +491,7 @@ function NetworkSettings({ currentNetwork }: { currentNetwork: NetworkId }) {
                         value={draft[f.key] ?? ""}
                         onChange={(e) => setDraft({ ...draft, [f.key]: e.target.value })}
                         placeholder={networks[id][f.key as keyof typeof cfg] as string || "Not set"}
-                        className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-xs text-gray-200 placeholder-gray-600 font-mono focus:outline-none focus:border-emerald-500/50"
+                        className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-xs text-gray-200 placeholder-gray-600 font-mono focus:outline-none focus:border-solen-orange/50"
                       />
                     </div>
                   ))}
@@ -499,7 +499,7 @@ function NetworkSettings({ currentNetwork }: { currentNetwork: NetworkId }) {
                   <div className="flex gap-2 pt-1">
                     <button
                       onClick={handleSave}
-                      className="bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium px-4 py-1.5 rounded-lg transition-colors"
+                      className="bg-solen-orange hover:bg-solen-orange-light text-white text-sm font-medium px-4 py-1.5 rounded-lg transition-colors"
                     >
                       Save
                     </button>

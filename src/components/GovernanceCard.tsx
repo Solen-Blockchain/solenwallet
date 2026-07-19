@@ -201,13 +201,13 @@ export function GovernanceCard() {
                             value={stakeWeight}
                             onChange={(e) => setStakeWeight(e.target.value)}
                             placeholder={`Stake weight (default: ${formatSolen(userStake)} SOLEN)`}
-                            className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-emerald-500/50"
+                            className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-solen-orange/50"
                           />
                           <div className="flex gap-2">
                             <button
                               onClick={() => handleVote(p.id, true)}
                               disabled={submitting}
-                              className="flex-1 bg-emerald-600 hover:bg-emerald-500 disabled:bg-gray-700 text-white text-sm py-2 rounded-lg transition-colors"
+                              className="flex-1 bg-solen-orange hover:bg-solen-orange-light disabled:bg-gray-700 text-white text-sm py-2 rounded-lg transition-colors"
                             >
                               {submitting ? "..." : "Vote FOR"}
                             </button>
@@ -229,7 +229,7 @@ export function GovernanceCard() {
                       ) : (
                         <button
                           onClick={() => setVotingOn(p.id)}
-                          className="w-full text-sm text-emerald-400 hover:text-emerald-300 bg-emerald-400/5 hover:bg-emerald-400/10 border border-emerald-400/20 py-2 rounded-lg transition-colors"
+                          className="w-full text-sm text-solen-orange hover:text-solen-orange-light bg-solen-orange/5 hover:bg-solen-orange/10 border border-solen-orange/20 py-2 rounded-lg transition-colors"
                         >
                           Vote on this proposal
                         </button>

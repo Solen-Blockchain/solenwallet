@@ -146,7 +146,7 @@ export function VestingCard() {
         <button
           onClick={handleClaim}
           disabled={submitting}
-          className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:bg-gray-700 disabled:text-gray-500 text-white font-medium py-2.5 rounded-lg transition-colors"
+          className="w-full bg-solen-orange hover:bg-solen-orange-light disabled:bg-gray-700 disabled:text-gray-500 text-white font-medium py-2.5 rounded-lg transition-colors"
         >
           {submitting ? "Claiming..." : "Claim Vested Tokens"}
         </button>

@@ -225,7 +225,7 @@ export function CreateAccountModal({ open, onClose }: Props) {
         value={name}
         onChange={(e) => { setName(e.target.value); setError(null); }}
         placeholder="e.g. Main Account"
-        className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-emerald-500/50"
+        className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-solen-orange/50"
         autoFocus
       />
     </div>
@@ -262,7 +262,7 @@ export function CreateAccountModal({ open, onClose }: Props) {
                 <select
                   value={useExistingMnemonicId}
                   onChange={(e) => setUseExistingMnemonicId(e.target.value)}
-                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-emerald-500/50"
+                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-solen-orange/50"
                 >
                   <option value="">New recovery phrase</option>
                   {mnemonics.map((m) => (
@@ -280,14 +280,14 @@ export function CreateAccountModal({ open, onClose }: Props) {
                   value={newPw}
                   onChange={(e) => { setNewPw(e.target.value); setError(null); }}
                   placeholder="Set a password (min 6 chars)"
-                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-emerald-500/50"
+                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-solen-orange/50"
                 />
                 <input
                   type="password"
                   value={newPwConfirm}
                   onChange={(e) => { setNewPwConfirm(e.target.value); setError(null); }}
                   placeholder="Confirm password"
-                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-emerald-500/50"
+                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-solen-orange/50"
                 />
                 <div className="text-xs text-gray-500">
                   Encrypts your recovery phrase on this device. You'll be asked for it to unlock the wallet and reveal the phrase.
@@ -300,7 +300,7 @@ export function CreateAccountModal({ open, onClose }: Props) {
             <button
               onClick={handleCreateGenerate}
               disabled={busy}
-              className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium py-2.5 rounded-lg transition-colors"
+              className="w-full bg-solen-orange hover:bg-solen-orange-light disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium py-2.5 rounded-lg transition-colors"
             >
               {busy ? "Working…" :
                 useExistingMnemonicId ? "Derive Next Account" : "Generate Recovery Phrase"}
@@ -356,7 +356,7 @@ export function CreateAccountModal({ open, onClose }: Props) {
             <button
               onClick={handleShowContinue}
               disabled={!backedUp}
-              className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-2.5 rounded-lg transition-colors"
+              className="w-full bg-solen-orange hover:bg-solen-orange-light disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-2.5 rounded-lg transition-colors"
             >
               Continue
             </button>
@@ -375,7 +375,7 @@ export function CreateAccountModal({ open, onClose }: Props) {
                 onChange={(e) => { setImportPhrase(e.target.value); setError(null); }}
                 placeholder="Paste your 12 or 24 word recovery phrase, separated by spaces"
                 rows={4}
-                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 font-mono resize-none"
+                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-solen-orange/50 font-mono resize-none"
               />
             </div>
 
@@ -387,14 +387,14 @@ export function CreateAccountModal({ open, onClose }: Props) {
                   value={newPw}
                   onChange={(e) => { setNewPw(e.target.value); setError(null); }}
                   placeholder="Set a password (min 6 chars)"
-                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-emerald-500/50"
+                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-solen-orange/50"
                 />
                 <input
                   type="password"
                   value={newPwConfirm}
                   onChange={(e) => { setNewPwConfirm(e.target.value); setError(null); }}
                   placeholder="Confirm password"
-                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-emerald-500/50"
+                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-solen-orange/50"
                 />
                 <div className="text-xs text-gray-500">
                   Encrypts your recovery phrase on this device.
@@ -407,7 +407,7 @@ export function CreateAccountModal({ open, onClose }: Props) {
             <button
               onClick={handleImportPhrase}
               disabled={busy}
-              className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium py-2.5 rounded-lg transition-colors"
+              className="w-full bg-solen-orange hover:bg-solen-orange-light disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium py-2.5 rounded-lg transition-colors"
             >
               {busy ? "Importing…" : "Import Account"}
             </button>
@@ -426,7 +426,7 @@ export function CreateAccountModal({ open, onClose }: Props) {
                 onChange={(e) => { setSecretKey(e.target.value); setError(null); }}
                 placeholder="Enter your 64-character hex secret key"
                 rows={3}
-                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 font-mono resize-none"
+                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-solen-orange/50 font-mono resize-none"
               />
             </div>
 
@@ -439,7 +439,7 @@ export function CreateAccountModal({ open, onClose }: Props) {
             <button
               onClick={handleImportKey}
               disabled={busy}
-              className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium py-2.5 rounded-lg transition-colors"
+              className="w-full bg-solen-orange hover:bg-solen-orange-light disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium py-2.5 rounded-lg transition-colors"
             >
               {busy ? "Importing…" : "Import Account"}
             </button>

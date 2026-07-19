@@ -1,6 +1,6 @@
 {
   "productName": "Solen Wallet",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "identifier": "com.solen.wallet",
   "build": {
     "frontendDist": "../dist",

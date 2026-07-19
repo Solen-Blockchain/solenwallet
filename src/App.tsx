@@ -159,8 +159,8 @@ function LockScreen() {
   return (
     <div className="flex items-center justify-center min-h-[60vh]">
       <div className="text-center max-w-sm w-full px-4">
-        <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-indigo-500/20 flex items-center justify-center">
-          <svg className="w-8 h-8 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-solen-orange/20 to-solen-orange-light/20 flex items-center justify-center">
+          <svg className="w-8 h-8 text-solen-orange" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
           </svg>
         </div>
@@ -173,12 +173,12 @@ function LockScreen() {
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
             autoFocus
-            className="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-emerald-500/50"
+            className="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-solen-orange/50"
           />
           {error && <p className="text-red-400 text-sm">{error}</p>}
           <button
             type="submit"
-            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-3 rounded-xl transition-colors"
+            className="w-full bg-solen-orange hover:bg-solen-orange-light text-white font-medium py-3 rounded-xl transition-colors"
           >
             Unlock
           </button>
@@ -201,8 +201,8 @@ function WalletDashboard() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center max-w-md">
-          <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-indigo-500/20 flex items-center justify-center">
-            <svg className="w-8 h-8 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-solen-orange/20 to-solen-orange-light/20 flex items-center justify-center">
+            <svg className="w-8 h-8 text-solen-orange" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
           </div>
@@ -212,7 +212,7 @@ function WalletDashboard() {
           </p>
           <button
             onClick={() => setShowCreate(true)}
-            className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-6 py-3 rounded-xl transition-colors"
+            className="bg-solen-orange hover:bg-solen-orange-light text-white font-medium px-6 py-3 rounded-xl transition-colors"
           >
             Get Started
           </button>
@@ -245,7 +245,7 @@ function WalletDashboard() {
             onClick={() => setActiveTab(tab.id)}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex-1 justify-center ${
               activeTab === tab.id
-                ? "bg-gray-800 text-emerald-400 shadow-sm"
+                ? "bg-gray-800 text-solen-orange shadow-sm"
                 : "text-gray-500 hover:text-gray-300 hover:bg-gray-800/50"
             }`}
           >

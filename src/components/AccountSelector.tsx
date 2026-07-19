@@ -15,7 +15,7 @@ export function AccountSelector() {
         onClick={() => setOpen(!open)}
         className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 rounded-lg px-3 py-2 text-sm transition-colors"
       >
-        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-emerald-500" />
+        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-solen-orange to-solen-orange-light" />
         <div className="text-left">
           <div className="font-medium text-gray-200">
             {activeAccount?.name || "Select Account"}

@@ -242,7 +242,7 @@ export function StakeStsolenCard() {
               onChange={(e) => setAmount(e.target.value)}
               placeholder="0.00"
               disabled={paused || submitting || !activeAccount}
-              className="w-full rounded-md bg-gray-950 border border-gray-700 px-3 py-2 text-sm tabular-nums text-white focus:border-emerald-500 focus:outline-none disabled:opacity-50"
+              className="w-full rounded-md bg-gray-950 border border-gray-700 px-3 py-2 text-sm tabular-nums text-white focus:border-solen-orange focus:outline-none disabled:opacity-50"
             />
             {parseError && (
               <span className="text-[11px] text-red-400">{parseError}</span>
@@ -305,7 +305,7 @@ export function StakeStsolenCard() {
               parseError !== null ||
               insufficientStsolen
             }
-            className="w-full rounded-md bg-emerald-600 hover:bg-emerald-500 disabled:bg-gray-700 disabled:cursor-not-allowed py-2.5 text-sm font-medium text-white transition-colors"
+            className="w-full rounded-md bg-solen-orange hover:bg-solen-orange-light disabled:bg-gray-700 disabled:cursor-not-allowed py-2.5 text-sm font-medium text-white transition-colors"
           >
             {submitting
               ? "Submitting…"
@@ -359,7 +359,7 @@ export function StakeStsolenCard() {
                       <button
                         onClick={() => onClaim(c.seq)}
                         disabled={!ready || submitting}
-                        className="rounded-md bg-emerald-600 hover:bg-emerald-500 disabled:bg-gray-700 disabled:cursor-not-allowed px-2 py-1 text-[10px] font-medium text-white"
+                        className="rounded-md bg-solen-orange hover:bg-solen-orange-light disabled:bg-gray-700 disabled:cursor-not-allowed px-2 py-1 text-[10px] font-medium text-white"
                       >
                         Claim
                       </button>
