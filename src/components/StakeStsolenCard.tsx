@@ -7,7 +7,7 @@ import {
   type UserOperation,
 } from "../lib/rpc";
 import {
-  signMessage,
+  signOperation,
   buildSigningMessage,
   addressToBytes,
 } from "../lib/wallet";
@@ -133,7 +133,7 @@ export function StakeStsolenCard() {
         rustActions,
         networks[network].chainId,
       );
-      op.signature = await signMessage(activeAccount.secretKey, sigMsg);
+      op.signature = await signOperation(activeAccount, sigMsg);
       await submitOperation(network, op);
       setResult({ success: true, message: successMsg });
       setAmount("");

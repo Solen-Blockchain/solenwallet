@@ -1,6 +1,6 @@
 {
   "name": "solenwallet",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "private": true,
   "type": "module",
   "scripts": {
@@ -29,6 +29,7 @@
   "dependencies": {
     "@noble/ed25519": "^3.0.1",
     "@noble/hashes": "^1.8.0",
+    "@noble/post-quantum": "^0.2.1",
     "@scure/bip39": "^2.2.0",
     "@tauri-apps/api": "^2.10.1",
     "@tauri-apps/plugin-http": "^2.5.7",

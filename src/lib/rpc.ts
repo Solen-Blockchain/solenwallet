@@ -37,6 +37,17 @@ export interface ChainStatus {
   height: number;
   latest_state_root: string;
   pending_ops: number;
+  /** Governance-configurable chain parameters (current on-chain values). */
+  config?: ChainConfig;
+}
+
+export interface ChainConfig {
+  /** Height at/after which post-quantum (ML-DSA / Hybrid) account auth is
+   *  honored. "18446744073709551615" (u64::MAX) or absent = dormant. Clients
+   *  MUST gate quantum-safe upgrades on `height >= pq_auth_height` — upgrading
+   *  while dormant bricks the account. String to avoid JS precision loss. */
+  pq_auth_height?: string;
+  [k: string]: unknown;
 }
 
 export interface AccountInfo {

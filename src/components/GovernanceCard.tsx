@@ -8,7 +8,7 @@ import {
   type GovernanceProposal,
   type UserOperation,
 } from "../lib/rpc";
-import { signMessage, buildSigningMessage, addressToBytes } from "../lib/wallet";
+import { signOperation, buildSigningMessage, addressToBytes } from "../lib/wallet";
 import { networks } from "../lib/networks";
 import { hexToBytes } from "@noble/hashes/utils";
 
@@ -118,7 +118,7 @@ export function GovernanceCard() {
       const argsBytes = Array.from(hexToBytes(argsHex));
       const rustActions = [{ Call: { target: targetBytes, method: "vote", args: argsBytes } }];
       const sigMsg = buildSigningMessage(senderBytes, accountInfo.nonce, 100000, rustActions, networks[network].chainId);
-      operation.signature = await signMessage(activeAccount.secretKey, sigMsg);
+      operation.signature = await signOperation(activeAccount, sigMsg);
 
       await submitOperation(network, operation);
 

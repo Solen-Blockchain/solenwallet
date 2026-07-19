@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useWallet } from "../lib/context";
 import { getAccount, submitOperation, type UserOperation } from "../lib/rpc";
-import { parseAmount, signMessage, buildSigningMessage, addressToBytes } from "../lib/wallet";
+import { parseAmount, signOperation, buildSigningMessage, addressToBytes } from "../lib/wallet";
 import { networks } from "../lib/networks";
 import { encryptOperation } from "../lib/encrypted";
 
@@ -47,7 +47,7 @@ export function SendForm() {
       const toBytes = Array.from(addressToBytes(recipient));
       const rustActions = [{ Transfer: { to: toBytes, amount: parseInt(rawAmount) } }];
       const sigMsg = buildSigningMessage(senderBytes, currentNonce, 10000, rustActions, networks[network].chainId);
-      operation.signature = await signMessage(activeAccount.secretKey, sigMsg);
+      operation.signature = await signOperation(activeAccount, sigMsg);
 
       if (mevProtected) {
         const opJson = JSON.stringify(operation);

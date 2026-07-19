@@ -10,7 +10,7 @@ import {
   type StakingInfo,
   type UserOperation,
 } from "../lib/rpc";
-import { formatBalance, parseAmount, signMessage, buildSigningMessage, addressToBytes } from "../lib/wallet";
+import { formatBalance, parseAmount, signOperation, buildSigningMessage, addressToBytes } from "../lib/wallet";
 import { networks } from "../lib/networks";
 import { hexToBytes } from "@noble/hashes/utils";
 
@@ -88,7 +88,7 @@ export function StakingCard() {
       const targetBytes = Array.from(hexToBytes(STAKING_ADDRESS));
       const rustActions = [{ Call: { target: targetBytes, method: "withdraw", args: [] as number[] } }];
       const sigMsg = buildSigningMessage(senderBytes, currentNonce, 100000, rustActions, networks[network].chainId);
-      operation.signature = await signMessage(activeAccount.secretKey, sigMsg);
+      operation.signature = await signOperation(activeAccount, sigMsg);
 
       await submitOperation(network, operation);
       setResult({ success: true, message: "Withdraw submitted. Matured tokens will be credited to your balance." });
@@ -153,7 +153,7 @@ export function StakingCard() {
       const argsBytes = Array.from(hexToBytes(args));
       const rustActions = [{ Call: { target: targetBytes, method, args: argsBytes } }];
       const sigMsg = buildSigningMessage(senderBytes, currentNonce, 100000, rustActions, networks[network].chainId);
-      operation.signature = await signMessage(activeAccount.secretKey, sigMsg);
+      operation.signature = await signOperation(activeAccount, sigMsg);
 
       await submitOperation(network, operation);
       setResult({

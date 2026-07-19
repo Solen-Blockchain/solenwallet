@@ -16,6 +16,8 @@ export interface LegacyKeyAccount {
   accountId: string;
   publicKey: string;
   secretKey: string;
+  /** Auth scheme on-chain (default "ed25519"). See WalletAccount.scheme. */
+  scheme?: AuthScheme;
 }
 
 export interface HdAccount {
@@ -27,6 +29,10 @@ export interface HdAccount {
   mnemonicId: string;
   /** Derivation index used at path m/44'/<coin>'/<index>'/0'. */
   derivationIndex: number;
+  /** Auth scheme on-chain (default "ed25519"). When "hybrid"/"ml-dsa", the
+   *  ML-DSA key is re-derived from the mnemonic at path .../<index>'/1' on
+   *  hydrate. Only the scheme flag is persisted, never key material. */
+  scheme?: AuthScheme;
 }
 
 export type StoredKey = LegacyKeyAccount | HdAccount;
@@ -117,8 +123,9 @@ export function saveKeystore(ks: Keystore): void {
 // ── Conversion helpers (Keystore ↔ in-memory WalletAccount) ────
 
 import { accountFromMnemonic } from "./hd";
+import { mlSeedFromMnemonic } from "./pq";
 import { bytesToHex } from "@noble/hashes/utils";
-import type { WalletAccount } from "./wallet";
+import type { WalletAccount, AuthScheme } from "./wallet";
 
 /**
  * Build the in-memory WalletAccount[] from the keystore. For "hd" accounts,
@@ -134,6 +141,7 @@ export async function hydrateAccounts(ks: Keystore): Promise<WalletAccount[]> {
         accountId: a.accountId,
         publicKey: a.publicKey,
         secretKey: a.secretKey,
+        scheme: a.scheme ?? "ed25519",
       });
     } else {
       const mnem = ks.mnemonics.find((m) => m.id === a.mnemonicId);
@@ -141,13 +149,20 @@ export async function hydrateAccounts(ks: Keystore): Promise<WalletAccount[]> {
         throw new Error(`HD account "${a.name}" references missing mnemonic ${a.mnemonicId}`);
       }
       const derived = await accountFromMnemonic(mnem.mnemonic, a.derivationIndex);
-      out.push({
+      const acct: WalletAccount = {
         name: a.name,
         accountId: a.accountId,
         publicKey: a.publicKey,
         secretKey: bytesToHex(derived.privateSeed) + bytesToHex(derived.publicKey),
         hd: { mnemonicId: a.mnemonicId, derivationIndex: a.derivationIndex },
-      });
+        scheme: a.scheme ?? "ed25519",
+      };
+      // Quantum-safe accounts also carry an ML-DSA key, re-derived (phrase-
+      // preserving) from the same mnemonic at the sibling path.
+      if (a.scheme === "hybrid" || a.scheme === "ml-dsa") {
+        acct.mlSeed = bytesToHex(await mlSeedFromMnemonic(mnem.mnemonic, a.derivationIndex));
+      }
+      out.push(acct);
     }
   }
   return out;
@@ -166,6 +181,7 @@ export function dehydrateAccount(a: WalletAccount): StoredKey {
       publicKey: a.publicKey,
       mnemonicId: a.hd.mnemonicId,
       derivationIndex: a.hd.derivationIndex,
+      scheme: a.scheme,
     };
   }
   return {
@@ -174,6 +190,7 @@ export function dehydrateAccount(a: WalletAccount): StoredKey {
     accountId: a.accountId,
     publicKey: a.publicKey,
     secretKey: a.secretKey,
+    scheme: a.scheme,
   };
 }
 

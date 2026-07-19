@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback, useMemo, type ReactNode } from "react";
 import { bytesToHex } from "@noble/hashes/utils";
 import { type NetworkId, DEFAULT_NETWORK } from "./networks";
-import { type WalletAccount, publicKeyToAccountId } from "./wallet";
+import { type WalletAccount, type AuthScheme, publicKeyToAccountId } from "./wallet";
 import {
   type Keystore,
   type StoredMnemonic,
@@ -52,6 +52,11 @@ interface WalletState {
   /** Re-verify password and return the requested mnemonic for display.
    *  Returns null on wrong password or unknown mnemonic. */
   revealMnemonic: (password: string, mnemonicId: string) => Promise<string | null>;
+  /** Record a completed on-chain auth-scheme change for an account: persists
+   *  the flag, re-hydrates (deriving the ML-DSA key for hybrid/ml-dsa), and
+   *  refreshes the active account. Only mnemonic-backed accounts can move to a
+   *  post-quantum scheme. Call AFTER the SetAuth operation is submitted. */
+  upgradeAccountScheme: (accountId: string, scheme: AuthScheme) => Promise<void>;
   // Lock state
   isLocked: boolean;
   hasPassword: boolean;
@@ -177,6 +182,22 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     setAccounts(hydrated);
     await persistKeystore(ks);
   }, [persistKeystore]);
+
+  const upgradeAccountScheme = useCallback(async (accountId: string, scheme: AuthScheme) => {
+    const idx = keystore.accounts.findIndex((a) => a.accountId === accountId);
+    if (idx < 0) throw new Error("account not found in keystore");
+    if (scheme !== "ed25519" && keystore.accounts[idx].kind !== "hd") {
+      throw new Error("only recovery-phrase accounts can be upgraded to quantum-safe auth");
+    }
+    const nextAccounts = keystore.accounts.map((a, i) => (i === idx ? { ...a, scheme } : a));
+    const nextKs: Keystore = { ...keystore, accounts: nextAccounts };
+    const hydrated = await hydrateAccounts(nextKs);
+    setKeystore(nextKs);
+    setAccounts(hydrated);
+    await persistKeystore(nextKs);
+    const refreshed = hydrated.find((a) => a.accountId === accountId);
+    if (refreshed) setActiveAccount(refreshed);
+  }, [keystore, persistKeystore]);
 
   const lock = useCallback(() => {
     sessionStorage.removeItem(SESSION_KEY);
@@ -438,6 +459,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     importMnemonicAccount,
     addAccountFromMnemonic,
     revealMnemonic,
+    upgradeAccountScheme,
     isLocked,
     hasPassword,
     lockTimeoutMs,
@@ -451,6 +473,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     network, accounts, activeAccount, mnemonicsList,
     addAccount, removeAccount,
     createMnemonicAccount, importMnemonicAccount, addAccountFromMnemonic, revealMnemonic,
+    upgradeAccountScheme,
     isLocked, hasPassword, lockTimeoutMs, unlock, lock,
     setPasswordFn, changePasswordFn, removePasswordFn, handleSetLockTimeout,
   ]);

@@ -2,6 +2,7 @@ import * as ed25519 from "@noble/ed25519";
 import { sha512 } from "@noble/hashes/sha2";
 import { blake3 } from "@noble/hashes/blake3";
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils";
+import { signHybrid, signMlDsa, mlSecretKeyFromSeed } from "./pq";
 
 // ed25519 v3 requires sha512 configured for async operations
 (ed25519.etc as Record<string, unknown>).sha512Async = async (...m: Uint8Array[]) =>
@@ -92,7 +93,17 @@ export interface WalletAccount {
     mnemonicId: string;
     derivationIndex: number;
   };
+  /** Account auth scheme. Absent/"ed25519" = classical Ed25519 (default).
+   *  "hybrid" = Ed25519 AND ML-DSA-65; "ml-dsa" = ML-DSA-65 only. Set when an
+   *  account has been upgraded to quantum-safe auth on-chain. */
+  scheme?: AuthScheme;
+  /** 32-byte ML-DSA seed (hex), re-derived from the mnemonic at unlock for
+   *  hybrid/ml-dsa accounts. Never persisted; the secret key is reconstructed
+   *  from it on demand at signing time. Absent for classical accounts. */
+  mlSeed?: string;
 }
+
+export type AuthScheme = "ed25519" | "hybrid" | "ml-dsa";
 
 export async function generateKeypair(): Promise<Keypair> {
   const privKey = ed25519.utils.randomSecretKey();
@@ -116,6 +127,31 @@ export async function signMessage(secretHex: string, message: Uint8Array): Promi
   const privBytes = hexToBytes(secretHex.slice(0, 64));
   const sig = await ed25519.signAsync(message, privBytes);
   return bytesToHex(sig);
+}
+
+/**
+ * Scheme-aware operation signer — the single path every card should use to sign
+ * a UserOperation, so an account keeps working after a quantum-safe upgrade.
+ * Dispatches on `account.scheme`:
+ *   - ed25519 (default): Ed25519 signature (64 bytes).
+ *   - hybrid:            ed25519[64] ‖ ml_dsa[3309] (both must verify).
+ *   - ml-dsa:            ml_dsa[3309].
+ * For hybrid/ml-dsa the account must be hydrated (mlSeed present); otherwise the
+ * wallet is locked or the account predates the upgrade — surface a clear error.
+ */
+export async function signOperation(account: WalletAccount, message: Uint8Array): Promise<string> {
+  const scheme = account.scheme ?? "ed25519";
+  if (scheme === "ed25519") return signMessage(account.secretKey, message);
+
+  if (!account.mlSeed) {
+    throw new Error("post-quantum key unavailable — unlock the wallet with its recovery phrase");
+  }
+  const mlSecretKey = mlSecretKeyFromSeed(hexToBytes(account.mlSeed));
+  if (scheme === "ml-dsa") return bytesToHex(signMlDsa(message, mlSecretKey));
+
+  // hybrid: Ed25519 seed is the first 32 bytes of the account secretKey.
+  const edSeed = hexToBytes(account.secretKey.slice(0, 64));
+  return bytesToHex(await signHybrid(message, edSeed, mlSecretKey));
 }
 
 export function publicKeyToAccountId(pubKeyHex: string): string {

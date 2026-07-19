@@ -5,6 +5,8 @@ export default {
     extend: {
       colors: {
         solen: {
+          orange: "#F5920F",
+          "orange-light": "#FF9E33",
           green: "#10b981",
           amber: "#f59e0b",
           indigo: "#6366f1",

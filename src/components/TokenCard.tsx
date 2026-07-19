@@ -6,7 +6,7 @@ import {
   submitOperation,
   type UserOperation,
 } from "../lib/rpc";
-import { signMessage, buildSigningMessage, addressToBytes } from "../lib/wallet";
+import { signOperation, buildSigningMessage, addressToBytes } from "../lib/wallet";
 import { networks, getNetworkConfig } from "../lib/networks";
 import { httpFetch } from "../lib/http";
 import { hexToBytes } from "@noble/hashes/utils";
@@ -184,7 +184,7 @@ export function TokenCard() {
       const argsBytes = Array.from(hexToBytes(args));
       const rustActions = [{ Call: { target: targetBytes, method: "transfer", args: argsBytes } }];
       const sigMsg = buildSigningMessage(senderBytes, currentNonce, 100000, rustActions, networks[network].chainId);
-      operation.signature = await signMessage(activeAccount.secretKey, sigMsg);
+      operation.signature = await signOperation(activeAccount, sigMsg);
 
       await submitOperation(network, operation);
 

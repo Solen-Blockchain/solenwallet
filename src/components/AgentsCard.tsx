@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useWallet } from "../lib/context";
 import { getAccount, submitRustOperation, getChainStatus } from "../lib/rpc";
 import {
-  signMessage, buildSigningMessage, addressToBytes,
+  signOperation, buildSigningMessage, addressToBytes,
   generateKeypair, base58Encode, parseAmount, formatBalance,
 } from "../lib/wallet";
 import { networks } from "../lib/networks";
@@ -25,6 +25,16 @@ function isSession(m: Record<string, unknown>): m is { Session: Record<string, u
   return !!(m as { Session?: unknown }).Session;
 }
 
+// Human-friendly agent names, kept locally (the chain only stores keys). Keyed
+// by `${accountId}:${sessionPubkeyHex}` so names are scoped per account.
+const LABELS_KEY = "solen_agent_labels";
+function loadLabels(): Record<string, string> {
+  try { return JSON.parse(localStorage.getItem(LABELS_KEY) || "{}"); } catch { return {}; }
+}
+function saveLabels(l: Record<string, string>) {
+  localStorage.setItem(LABELS_KEY, JSON.stringify(l));
+}
+
 export function AgentsCard() {
   const { activeAccount, network } = useWallet();
   const chainId = networks[network].chainId;
@@ -36,8 +46,11 @@ export function AgentsCard() {
   const [status, setStatus] = useState<{ msg: string; kind: "ok" | "err" } | null>(null);
   const [busy, setBusy] = useState(false);
 
+  const [labels, setLabels] = useState<Record<string, string>>(() => loadLabels());
+
   // Grant form.
   const [newKey, setNewKey] = useState<{ pub: string; seed: string } | null>(null);
+  const [name, setName] = useState("");
   const [budget, setBudget] = useState("");
   const [perOp, setPerOp] = useState("");
   const [methods, setMethods] = useState("");
@@ -84,7 +97,7 @@ export function AgentsCard() {
     const senderBytes = Array.from(addressToBytes(activeAccount.accountId));
     const rustActions = [{ SetAuth: { auth_methods: newMethods } }];
     const sigMsg = buildSigningMessage(senderBytes, info.nonce, 100000, rustActions, chainId);
-    const signature = await signMessage(activeAccount.secretKey, sigMsg);
+    const signature = await signOperation(activeAccount, sigMsg);
     const rustOp = {
       sender: senderBytes,
       nonce: info.nonce,
@@ -116,8 +129,12 @@ export function AgentsCard() {
       const kept = rawMethods.filter((m) => !(isSession(m)
         && bytesToHex(Uint8Array.from((m.Session as any).session_key)) === newKey.pub));
       await submitSetAuth([...kept, session]);
+      if (name.trim()) {
+        const next = { ...labels, [`${activeAccount.accountId}:${newKey.pub}`]: name.trim() };
+        setLabels(next); saveLabels(next);
+      }
       setStatus({ msg: "Agent granted. It may take a few seconds to appear.", kind: "ok" });
-      setNewKey(null); setBudget(""); setPerOp(""); setMethods(""); setTargets(""); setExpiryHeight(""); setLockdown(false);
+      setNewKey(null); setName(""); setBudget(""); setPerOp(""); setMethods(""); setTargets(""); setExpiryHeight(""); setLockdown(false);
       setTimeout(() => void load(), 2500);
     } catch (e) {
       setStatus({ msg: e instanceof Error ? e.message : String(e), kind: "err" });
@@ -136,6 +153,8 @@ export function AgentsCard() {
         && bytesToHex(Uint8Array.from((m.Session as any).session_key)) === pubkeyHex));
       if (kept.length === 0) throw new Error("cannot remove the account's only auth method");
       await submitSetAuth(kept);
+      const lk = `${activeAccount.accountId}:${pubkeyHex}`;
+      if (labels[lk]) { const next = { ...labels }; delete next[lk]; setLabels(next); saveLabels(next); }
       setStatus({ msg: "Agent revoked.", kind: "ok" });
       setTimeout(() => void load(), 2500);
     } catch (e) {
@@ -183,7 +202,12 @@ export function AgentsCard() {
             {agents.map((a) => (
               <div key={a.pubkeyHex} className="bg-gray-900/50 rounded-lg p-4 border border-gray-700/40">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-mono text-xs text-gray-300">{short(a.pubkeyHex)}</span>
+                  <div className="min-w-0">
+                    <div className="text-sm text-gray-200 truncate">
+                      {labels[`${activeAccount.accountId}:${a.pubkeyHex}`] ?? <span className="text-gray-500 italic">Unnamed agent</span>}
+                    </div>
+                    <span className="font-mono text-[11px] text-gray-500">{short(a.pubkeyHex)}</span>
+                  </div>
                   <button
                     onClick={() => void onRevoke(a.pubkeyHex)}
                     disabled={busy}
@@ -223,6 +247,9 @@ export function AgentsCard() {
             </div>
 
             <div className="space-y-3">
+              <Field label="Agent name (for your reference)">
+                <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Trading bot" className={inputCls} />
+              </Field>
               <Field label="Lifetime budget (SOLEN, blank = unlimited)">
                 <input value={budget} onChange={(e) => setBudget(e.target.value)} placeholder="e.g. 10" className={inputCls} />
               </Field>

@@ -12,10 +12,11 @@ import { TransactionHistory } from "./components/TransactionHistory";
 import { AccountDetails } from "./components/AccountDetails";
 import { GovernanceCard } from "./components/GovernanceCard";
 import { AgentsCard } from "./components/AgentsCard";
+import { SecurityCard } from "./components/SecurityCard";
 import { SettingsCard } from "./components/SettingsCard";
 import { CreateAccountModal } from "./components/CreateAccountModal";
 
-type Tab = "wallet" | "tokens" | "staking" | "governance" | "agents" | "account" | "settings";
+type Tab = "wallet" | "tokens" | "staking" | "governance" | "agents" | "security" | "account" | "settings";
 
 const tabs: { id: Tab; label: string; icon: ReactNode }[] = [
   {
@@ -60,6 +61,16 @@ const tabs: { id: Tab; label: string; icon: ReactNode }[] = [
     icon: (
       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+      </svg>
+    ),
+  },
+  {
+    id: "security",
+    label: "Security",
+    icon: (
+      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.2 12.2l1.9 1.9 3.7-3.9" />
       </svg>
     ),
   },
@@ -119,6 +130,8 @@ function TabContent({ tab }: { tab: Tab }) {
       return <GovernanceCard />;
     case "agents":
       return <AgentsCard />;
+    case "security":
+      return <SecurityCard />;
     case "account":
       return (
         <div className="space-y-6">
